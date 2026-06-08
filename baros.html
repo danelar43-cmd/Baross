@@ -1,0 +1,1274 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>BAROS</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Fraunces:ital,wght@0,300;0,600;1,300&display=swap');
+
+  :root {
+    --bg: #0e0e0e;
+    --surface: #181818;
+    --surface2: #222222;
+    --border: #2e2e2e;
+    --accent: #c8f060;
+    --accent2: #f0a840;
+    --danger: #f06060;
+    --text: #f0ede8;
+    --muted: #888;
+    --radius: 12px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+  body {
+    font-family: 'DM Mono', monospace;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    max-width: 480px;
+    margin: 0 auto;
+    padding-bottom: 80px;
+  }
+
+  /* HEADER */
+  .app-header {
+    padding: 20px 20px 12px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    background: var(--bg);
+    z-index: 100;
+  }
+  .app-logo {
+    font-family: 'Fraunces', serif;
+    font-size: 28px;
+    font-weight: 600;
+    letter-spacing: -1px;
+    color: var(--accent);
+  }
+  .header-right { display: flex; align-items: center; gap: 10px; }
+  .admin-badge {
+    font-size: 10px;
+    background: var(--accent);
+    color: #0e0e0e;
+    padding: 3px 8px;
+    border-radius: 20px;
+    font-weight: 500;
+    display: none;
+  }
+  .admin-badge.visible { display: block; }
+  .btn-icon {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text);
+    width: 36px; height: 36px;
+    border-radius: 8px;
+    font-size: 16px;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+  }
+
+  /* NAV */
+  .bottom-nav {
+    position: fixed;
+    bottom: 0; left: 50%;
+    transform: translateX(-50%);
+    width: 100%; max-width: 480px;
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    display: flex;
+    z-index: 100;
+  }
+  .nav-item {
+    flex: 1;
+    padding: 10px 4px 12px;
+    display: flex; flex-direction: column; align-items: center; gap: 3px;
+    cursor: pointer;
+    border: none; background: none; color: var(--muted);
+    font-family: 'DM Mono', monospace;
+    font-size: 9px;
+    transition: color 0.2s;
+  }
+  .nav-item .icon { font-size: 20px; }
+  .nav-item.active { color: var(--accent); }
+
+  /* SCREENS */
+  .screen { display: none; padding: 16px; }
+  .screen.active { display: block; }
+
+  /* CARDS */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px;
+    margin-bottom: 12px;
+  }
+  .card-title {
+    font-size: 11px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 12px;
+  }
+
+  /* BUTTONS */
+  .btn {
+    width: 100%;
+    padding: 14px;
+    border-radius: var(--radius);
+    border: none;
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: opacity 0.2s, transform 0.1s;
+  }
+  .btn:active { transform: scale(0.98); opacity: 0.85; }
+  .btn-primary { background: var(--accent); color: #0e0e0e; }
+  .btn-danger { background: var(--danger); color: white; }
+  .btn-secondary { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
+  .btn-sm {
+    padding: 7px 12px;
+    font-size: 11px;
+    width: auto;
+    border-radius: 8px;
+  }
+
+  /* EMPLOYEE SELECT */
+  .employee-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+  .emp-card {
+    background: var(--surface2);
+    border: 2px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px 10px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .emp-card:active { transform: scale(0.97); }
+  .emp-card.selected { border-color: var(--accent); background: #1e2a10; }
+  .emp-card .emp-name { font-size: 13px; font-weight: 500; }
+  .emp-card .emp-status { font-size: 10px; color: var(--muted); margin-top: 4px; }
+  .emp-card.active-shift .emp-status { color: var(--accent); }
+
+  /* TURNO ACTIVO */
+  .turno-info {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 12px 0;
+  }
+  .turno-timer {
+    font-family: 'Fraunces', serif;
+    font-size: 36px;
+    font-weight: 300;
+    color: var(--accent);
+    letter-spacing: -1px;
+  }
+  .turno-meta { font-size: 11px; color: var(--muted); margin-top: 4px; }
+
+  /* TASKS */
+  .task-item {
+    display: flex; align-items: flex-start; gap: 12px;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .task-item:last-child { border-bottom: none; }
+  .task-check {
+    width: 22px; height: 22px; min-width: 22px;
+    border: 2px solid var(--border);
+    border-radius: 6px;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px;
+    transition: all 0.2s;
+    background: var(--surface2);
+  }
+  .task-check.done { background: var(--accent); border-color: var(--accent); color: #0e0e0e; }
+  .task-body { flex: 1; }
+  .task-name { font-size: 13px; line-height: 1.4; }
+  .task-name.done { text-decoration: line-through; color: var(--muted); }
+  .task-meta { font-size: 10px; color: var(--muted); margin-top: 3px; }
+  .task-section-label {
+    font-size: 10px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    padding: 10px 0 6px;
+  }
+
+  /* VENTA */
+  .input-field {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px;
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    font-size: 14px;
+    margin-bottom: 10px;
+  }
+  .input-field:focus { outline: none; border-color: var(--accent); }
+  textarea.input-field { resize: vertical; min-height: 80px; }
+  label.field-label { font-size: 11px; color: var(--muted); display: block; margin-bottom: 6px; }
+
+  /* PIN */
+  .pin-screen {
+    display: flex; flex-direction: column; align-items: center;
+    padding: 40px 24px;
+  }
+  .pin-title {
+    font-family: 'Fraunces', serif;
+    font-size: 22px;
+    font-weight: 300;
+    margin-bottom: 8px;
+  }
+  .pin-dots {
+    display: flex; gap: 12px;
+    margin: 24px 0;
+  }
+  .pin-dot {
+    width: 14px; height: 14px;
+    border-radius: 50%;
+    border: 2px solid var(--border);
+    transition: all 0.2s;
+  }
+  .pin-dot.filled { background: var(--accent); border-color: var(--accent); }
+  .pin-pad {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    width: 100%;
+    max-width: 280px;
+  }
+  .pin-key {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px;
+    font-family: 'Fraunces', serif;
+    font-size: 22px;
+    font-weight: 300;
+    color: var(--text);
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.15s;
+  }
+  .pin-key:active { background: var(--surface2); transform: scale(0.95); }
+  .pin-error { color: var(--danger); font-size: 12px; margin-top: 12px; }
+
+  /* ADMIN PANEL */
+  .admin-section { margin-bottom: 20px; }
+  .admin-section-title {
+    font-size: 10px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 10px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--border);
+  }
+  .admin-row {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 10px 0;
+    border-bottom: 1px solid #1e1e1e;
+    gap: 8px;
+  }
+  .admin-row:last-child { border-bottom: none; }
+  .admin-row-label { font-size: 13px; flex: 1; }
+  .admin-row-sub { font-size: 11px; color: var(--muted); }
+
+  /* HISTORIAL */
+  .historial-item {
+    padding: 12px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .historial-item:last-child { border-bottom: none; }
+  .historial-top { display: flex; justify-content: space-between; align-items: center; }
+  .historial-name { font-size: 14px; font-weight: 500; }
+  .historial-valor { font-size: 13px; color: var(--accent); }
+  .historial-meta { font-size: 11px; color: var(--muted); margin-top: 4px; }
+  .paid-badge {
+    font-size: 9px;
+    padding: 2px 7px;
+    border-radius: 10px;
+    background: #1e2a10;
+    color: var(--accent);
+    border: 1px solid var(--accent);
+  }
+  .unpaid-badge {
+    font-size: 9px;
+    padding: 2px 7px;
+    border-radius: 10px;
+    background: #2a1010;
+    color: var(--danger);
+    border: 1px solid var(--danger);
+    cursor: pointer;
+  }
+
+  /* MODAL */
+  .modal-overlay {
+    display: none;
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.75);
+    z-index: 200;
+    align-items: flex-end;
+    justify-content: center;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: var(--surface);
+    border-radius: 20px 20px 0 0;
+    padding: 24px 20px 36px;
+    width: 100%; max-width: 480px;
+    max-height: 85vh;
+    overflow-y: auto;
+  }
+  .modal-title {
+    font-family: 'Fraunces', serif;
+    font-size: 20px;
+    font-weight: 300;
+    margin-bottom: 16px;
+  }
+  .modal-close {
+    float: right;
+    background: none; border: none;
+    color: var(--muted); font-size: 20px;
+    cursor: pointer; padding: 0;
+  }
+
+  /* ALERT DOT */
+  .alert-dot {
+    width: 8px; height: 8px;
+    background: var(--danger);
+    border-radius: 50%;
+    position: absolute;
+    top: 6px; right: 6px;
+  }
+  .nav-item { position: relative; }
+
+  /* ESTADO VACIO */
+  .empty-state {
+    text-align: center;
+    padding: 32px 16px;
+    color: var(--muted);
+    font-size: 13px;
+  }
+  .empty-state .big { font-size: 32px; margin-bottom: 8px; }
+
+  /* TAG */
+  .tag {
+    display: inline-block;
+    font-size: 9px;
+    padding: 2px 7px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    margin-left: 6px;
+  }
+  .tag.apertura { border-color: #4488ff; color: #4488ff; }
+  .tag.cierre { border-color: var(--accent2); color: var(--accent2); }
+  .tag.recurrente { border-color: #aa88ff; color: #aa88ff; }
+  .tag.asignada { border-color: var(--accent); color: var(--accent); }
+
+  /* SELECT */
+  select.input-field { appearance: none; }
+
+  /* CHIPS */
+  .chip-row { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+  .chip {
+    padding: 5px 12px;
+    border-radius: 20px;
+    border: 1px solid var(--border);
+    font-size: 11px;
+    cursor: pointer;
+    background: var(--surface2);
+    color: var(--muted);
+    transition: all 0.15s;
+  }
+  .chip.selected { background: #1e2a10; border-color: var(--accent); color: var(--accent); }
+
+  .divider { height: 1px; background: var(--border); margin: 16px 0; }
+  .text-muted { color: var(--muted); font-size: 12px; }
+  .text-accent { color: var(--accent); }
+  .mt-8 { margin-top: 8px; }
+  .mt-12 { margin-top: 12px; }
+  .flex { display: flex; }
+  .flex-between { display: flex; justify-content: space-between; align-items: center; }
+  .gap-8 { gap: 8px; }
+</style>
+</head>
+<body>
+
+<div class="app-header">
+  <div class="app-logo">BAROS</div>
+  <div class="header-right">
+    <span class="admin-badge" id="adminBadge">ADMIN</span>
+    <button class="btn-icon" id="headerBtn" onclick="handleHeaderBtn()">⚙</button>
+  </div>
+</div>
+
+<!-- BOTTOM NAV -->
+<nav class="bottom-nav">
+  <button class="nav-item active" onclick="showScreen('turno')" id="nav-turno">
+    <span class="icon">⏱</span><span>Turno</span>
+  </button>
+  <button class="nav-item" onclick="showScreen('tareas')" id="nav-tareas">
+    <span class="icon">✓</span><span>Tareas</span>
+    <span class="alert-dot" id="tareasAlert" style="display:none"></span>
+  </button>
+  <button class="nav-item" onclick="showScreen('cierre')" id="nav-cierre">
+    <span class="icon">📋</span><span>Cierre</span>
+  </button>
+  <button class="nav-item" onclick="showScreen('admin')" id="nav-admin">
+    <span class="icon">🔐</span><span>Admin</span>
+  </button>
+</nav>
+
+<!-- ==================== SCREEN: TURNO ==================== -->
+<div class="screen active" id="screen-turno">
+  <div id="turnoSelectView">
+    <div class="card">
+      <div class="card-title">¿Quién está trabajando?</div>
+      <div class="employee-grid" id="employeeGrid"></div>
+    </div>
+  </div>
+
+  <div id="turnoActiveView" style="display:none">
+    <div class="card">
+      <div class="card-title">TURNO EN CURSO</div>
+      <div class="turno-info">
+        <div>
+          <div class="turno-timer" id="timerDisplay">00:00:00</div>
+          <div class="turno-meta" id="turnoMeta"></div>
+        </div>
+        <div style="font-size:32px">🟢</div>
+      </div>
+      <button class="btn btn-danger" onclick="endShift()">Terminar turno</button>
+    </div>
+    <div class="card">
+      <div class="card-title">Tareas de apertura pendientes</div>
+      <div id="turnoTareasList"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== SCREEN: TAREAS ==================== -->
+<div class="screen" id="screen-tareas">
+  <div id="tareasSinTurno" class="empty-state" style="display:none">
+    <div class="big">⏱</div>
+    Inicia tu turno primero para ver las tareas del día.
+  </div>
+  <div id="tareasContent">
+    <div class="card">
+      <div class="card-title">🌅 Apertura</div>
+      <div id="listApertura"></div>
+    </div>
+    <div class="card">
+      <div class="card-title">🔄 Tareas periódicas</div>
+      <div id="listRecurrente"></div>
+    </div>
+    <div class="card">
+      <div class="card-title">📌 Asignadas para hoy</div>
+      <div id="listAsignada"></div>
+    </div>
+    <div class="card">
+      <div class="card-title">🌙 Cierre</div>
+      <div id="listCierre"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== SCREEN: CIERRE ==================== -->
+<div class="screen" id="screen-cierre">
+  <div class="card">
+    <div class="card-title">Venta del día</div>
+    <label class="field-label">Valor total ($COP)</label>
+    <input type="number" class="input-field" id="ventaInput" placeholder="0">
+    <label class="field-label">Observaciones</label>
+    <textarea class="input-field" id="obsInput" placeholder="¿Algo importante que reportar?"></textarea>
+    <button class="btn btn-primary" onclick="saveVenta()">Guardar cierre</button>
+  </div>
+  <div class="card" id="ventasHistorial" style="display:none">
+    <div class="card-title">Últimos cierres</div>
+    <div id="ventasList"></div>
+  </div>
+</div>
+
+<!-- ==================== SCREEN: ADMIN ==================== -->
+<div class="screen" id="screen-admin">
+  <div id="adminLocked">
+    <div class="pin-screen">
+      <div class="pin-title">Panel Admin</div>
+      <div class="text-muted">Ingresa tu PIN</div>
+      <div class="pin-dots" id="pinDots">
+        <div class="pin-dot" id="d0"></div>
+        <div class="pin-dot" id="d1"></div>
+        <div class="pin-dot" id="d2"></div>
+        <div class="pin-dot" id="d3"></div>
+      </div>
+      <div class="pin-pad">
+        <button class="pin-key" onclick="pinKey('1')">1</button>
+        <button class="pin-key" onclick="pinKey('2')">2</button>
+        <button class="pin-key" onclick="pinKey('3')">3</button>
+        <button class="pin-key" onclick="pinKey('4')">4</button>
+        <button class="pin-key" onclick="pinKey('5')">5</button>
+        <button class="pin-key" onclick="pinKey('6')">6</button>
+        <button class="pin-key" onclick="pinKey('7')">7</button>
+        <button class="pin-key" onclick="pinKey('8')">8</button>
+        <button class="pin-key" onclick="pinKey('9')">9</button>
+        <button class="pin-key" onclick="pinKey('del')" style="font-size:16px">⌫</button>
+        <button class="pin-key" onclick="pinKey('0')">0</button>
+        <button class="pin-key" onclick="pinKey('ok')" style="font-size:14px;color:var(--accent)">OK</button>
+      </div>
+      <div class="pin-error" id="pinError"></div>
+    </div>
+  </div>
+
+  <div id="adminUnlocked" style="display:none">
+
+    <!-- HISTORIAL DE TURNOS -->
+    <div class="admin-section">
+      <div class="admin-section-title">📋 Historial de turnos</div>
+      <div id="historialList"></div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- EMPLEADOS -->
+    <div class="admin-section">
+      <div class="admin-section-title">👥 Empleados</div>
+      <div id="empleadosList"></div>
+      <button class="btn btn-secondary mt-12" onclick="openModal('modalAddEmpleado')">+ Añadir empleado</button>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- VALOR HORA -->
+    <div class="admin-section">
+      <div class="admin-section-title">💰 Valor por hora</div>
+      <div class="admin-row">
+        <div>
+          <div class="admin-row-label" id="valorHoraDisplay">$8.500 / hora</div>
+          <div class="admin-row-sub">Base para cálculo de sueldos</div>
+        </div>
+        <button class="btn btn-secondary btn-sm" onclick="openModal('modalValorHora')">Editar</button>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- TAREAS -->
+    <div class="admin-section">
+      <div class="admin-section-title">✓ Tareas</div>
+      <div id="adminTareasList"></div>
+      <button class="btn btn-secondary mt-12" onclick="openModal('modalAddTarea')">+ Nueva tarea</button>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- ASIGNAR TAREA -->
+    <div class="admin-section">
+      <div class="admin-section-title">📌 Asignar tarea manual hoy</div>
+      <label class="field-label">Empleado</label>
+      <select class="input-field" id="asignarEmpleado"></select>
+      <label class="field-label">Descripción</label>
+      <input type="text" class="input-field" id="asignarDesc" placeholder="Ej: Limpiar nevera">
+      <label class="field-label">Minutos estimados</label>
+      <input type="number" class="input-field" id="asignarMins" placeholder="30">
+      <label class="field-label">Pasos / instrucciones (opcional)</label>
+      <textarea class="input-field" id="asignarPasos" placeholder="Paso 1..."></textarea>
+      <button class="btn btn-primary" onclick="asignarTarea()">Asignar tarea</button>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- VENTAS -->
+    <div class="admin-section">
+      <div class="admin-section-title">💵 Ventas registradas</div>
+      <div id="adminVentasList"></div>
+    </div>
+
+    <button class="btn btn-secondary mt-12" onclick="lockAdmin()">Cerrar panel admin</button>
+  </div>
+</div>
+
+<!-- ==================== MODALS ==================== -->
+
+<!-- Modal: Add empleado -->
+<div class="modal-overlay" id="modalAddEmpleado">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('modalAddEmpleado')">✕</button>
+    <div class="modal-title">Nuevo empleado</div>
+    <label class="field-label">Nombre</label>
+    <input type="text" class="input-field" id="newEmpName" placeholder="Nombre completo">
+    <button class="btn btn-primary mt-12" onclick="addEmpleado()">Guardar</button>
+  </div>
+</div>
+
+<!-- Modal: Valor hora -->
+<div class="modal-overlay" id="modalValorHora">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('modalValorHora')">✕</button>
+    <div class="modal-title">Valor por hora</div>
+    <label class="field-label">$ COP por hora</label>
+    <input type="number" class="input-field" id="newValorHora" placeholder="8500">
+    <button class="btn btn-primary mt-12" onclick="saveValorHora()">Guardar</button>
+  </div>
+</div>
+
+<!-- Modal: Add tarea -->
+<div class="modal-overlay" id="modalAddTarea">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('modalAddTarea')">✕</button>
+    <div class="modal-title">Nueva tarea</div>
+    <label class="field-label">Descripción</label>
+    <input type="text" class="input-field" id="newTareaDesc" placeholder="Ej: Limpiar estufa">
+    <label class="field-label">Tipo</label>
+    <select class="input-field" id="newTareaTipo">
+      <option value="apertura">Apertura (diaria)</option>
+      <option value="cierre">Cierre (diaria)</option>
+      <option value="recurrente">Periódica (cada X días)</option>
+    </select>
+    <div id="frecuenciaField" style="display:none">
+      <label class="field-label">Cada cuántos días</label>
+      <input type="number" class="input-field" id="newTareaFreq" placeholder="7" value="7">
+    </div>
+    <label class="field-label">Minutos estimados</label>
+    <input type="number" class="input-field" id="newTareaMins" placeholder="15">
+    <label class="field-label">Pasos / instrucciones (opcional)</label>
+    <textarea class="input-field" id="newTareaPasos" placeholder="Paso 1..."></textarea>
+    <button class="btn btn-primary mt-12" onclick="addTarea()">Guardar tarea</button>
+  </div>
+</div>
+
+<!-- Modal: Task detail -->
+<div class="modal-overlay" id="modalTaskDetail">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('modalTaskDetail')">✕</button>
+    <div class="modal-title" id="detailTaskName"></div>
+    <div class="text-muted" id="detailTaskMins"></div>
+    <div class="divider"></div>
+    <div id="detailTaskPasos" style="white-space:pre-wrap; font-size:13px; line-height:1.7; color:var(--text)"></div>
+  </div>
+</div>
+
+<!-- Modal: Confirm end shift -->
+<div class="modal-overlay" id="modalEndShift">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('modalEndShift')">✕</button>
+    <div class="modal-title">¿Terminar turno?</div>
+    <div id="endShiftSummary" class="text-muted mt-8" style="font-size:13px;line-height:1.6"></div>
+    <div class="divider"></div>
+    <button class="btn btn-danger" onclick="confirmEndShift()">Sí, terminar turno</button>
+    <button class="btn btn-secondary mt-8" onclick="closeModal('modalEndShift')">Cancelar</button>
+  </div>
+</div>
+
+<script>
+// =============================================
+// SUPABASE CONFIG
+// =============================================
+const SUPABASE_URL = 'https://uqwfzdabiutiljcrlohy.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVxd2Z6ZGFiaXV0aWxqY3Jsb2h5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAwMTMxNDYsImV4cCI6MjA5NTU4OTE0Nn0.3FaMPS137S5-zFNDEazbvqrwBDDPtcmEFgLcbzG8X8Y';
+
+const sb = (path, opts={}) => fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
+  headers: {
+    'apikey': SUPABASE_KEY,
+    'Authorization': `Bearer ${SUPABASE_KEY}`,
+    'Content-Type': 'application/json',
+    'Prefer': opts.prefer || 'return=representation',
+    ...opts.headers
+  },
+  ...opts
+});
+
+const dbGet = (table, query='') => sb(`${table}?${query}`).then(r=>r.json());
+const dbPost = (table, data) => sb(table, {method:'POST', body:JSON.stringify(data)}).then(r=>r.json());
+const dbPatch = (table, query, data) => sb(`${table}?${query}`, {method:'PATCH', body:JSON.stringify(data), headers:{'Prefer':'return=representation'}}).then(r=>r.json());
+const dbDelete = (table, query) => sb(`${table}?${query}`, {method:'DELETE'});
+
+// =============================================
+// STATE
+// =============================================
+const PIN = '1984';
+let isAdmin = false;
+let currentEmployee = null;
+let shiftStart = null;
+let timerInterval = null;
+let employees = [];
+let tareas = [];
+let turnos = [];
+let ventas = [];
+let valorHora = 8500;
+let currentScreen = 'turno';
+
+// =============================================
+// INIT — create tables if needed via upsert
+// =============================================
+async function init() {
+  await ensureTables();
+  await loadAll();
+  renderTurnoScreen();
+  renderTareasScreen();
+  startPolling();
+}
+
+async function ensureTables() {
+  // Tables are created via Supabase dashboard or SQL.
+  // We just load config and seed default employees if empty.
+  try {
+    const cfg = await dbGet('baros_config', 'key=eq.valor_hora');
+    if (cfg && cfg.length > 0) valorHora = parseFloat(cfg[0].value);
+    else await dbPost('baros_config', {key:'valor_hora', value: String(valorHora)});
+  } catch(e) {}
+}
+
+async function loadAll() {
+  try {
+    const [emps, tar, tur, ven] = await Promise.all([
+      dbGet('baros_empleados', 'order=nombre.asc'),
+      dbGet('baros_tareas', 'order=tipo.asc'),
+      dbGet('baros_turnos', 'order=inicio.desc&limit=50'),
+      dbGet('baros_ventas', 'order=fecha.desc&limit=30')
+    ]);
+    employees = emps || [];
+    tareas = tar || [];
+    turnos = tur || [];
+    ventas = ven || [];
+
+    // Check if there's an active shift in progress (e.g. page refresh)
+    const active = turnos.find(t => t.activo);
+    if (active) {
+      currentEmployee = employees.find(e => e.id === active.empleado_id);
+      shiftStart = new Date(active.inicio);
+      startTimer();
+    }
+  } catch(e) { console.error('loadAll error', e); }
+}
+
+function startPolling() {
+  setInterval(async () => {
+    try {
+      const [tar, tur, ven] = await Promise.all([
+        dbGet('baros_tareas', 'order=tipo.asc'),
+        dbGet('baros_turnos', 'order=inicio.desc&limit=50'),
+        dbGet('baros_ventas', 'order=fecha.desc&limit=30')
+      ]);
+      tareas = tar || [];
+      turnos = tur || [];
+      ventas = ven || [];
+      renderTareasScreen();
+      if (isAdmin) renderAdminContent();
+    } catch(e) {}
+  }, 30000);
+}
+
+// =============================================
+// NAVIGATION
+// =============================================
+function showScreen(name) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById(`screen-${name}`).classList.add('active');
+  document.getElementById(`nav-${name}`).classList.add('active');
+  currentScreen = name;
+
+  if (name === 'admin') {
+    if (!isAdmin) { /* show pin */ }
+    else renderAdminContent();
+  }
+  if (name === 'tareas') renderTareasScreen();
+  if (name === 'cierre') renderCierreScreen();
+}
+
+function handleHeaderBtn() {
+  if (isAdmin) lockAdmin();
+  else showScreen('admin');
+}
+
+// =============================================
+// PIN
+// =============================================
+let pinBuffer = '';
+function pinKey(k) {
+  if (k === 'del') { pinBuffer = pinBuffer.slice(0,-1); }
+  else if (k === 'ok') { checkPin(); return; }
+  else if (pinBuffer.length < 4) pinBuffer += k;
+  renderPinDots();
+}
+function renderPinDots() {
+  for(let i=0;i<4;i++) {
+    document.getElementById(`d${i}`).classList.toggle('filled', i < pinBuffer.length);
+  }
+}
+function checkPin() {
+  if (pinBuffer === PIN) {
+    isAdmin = true;
+    pinBuffer = '';
+    renderPinDots();
+    document.getElementById('pinError').textContent = '';
+    document.getElementById('adminLocked').style.display = 'none';
+    document.getElementById('adminUnlocked').style.display = 'block';
+    document.getElementById('adminBadge').classList.add('visible');
+    renderAdminContent();
+  } else {
+    document.getElementById('pinError').textContent = 'PIN incorrecto';
+    pinBuffer = '';
+    renderPinDots();
+  }
+}
+function lockAdmin() {
+  isAdmin = false;
+  pinBuffer = '';
+  renderPinDots();
+  document.getElementById('adminLocked').style.display = 'block';
+  document.getElementById('adminUnlocked').style.display = 'none';
+  document.getElementById('adminBadge').classList.remove('visible');
+  showScreen('turno');
+}
+
+// =============================================
+// TURNO SCREEN
+// =============================================
+function renderTurnoScreen() {
+  const grid = document.getElementById('employeeGrid');
+  const active = turnos.find(t => t.activo);
+
+  if (active && currentEmployee) {
+    document.getElementById('turnoSelectView').style.display = 'none';
+    document.getElementById('turnoActiveView').style.display = 'block';
+    document.getElementById('turnoMeta').textContent =
+      `${currentEmployee.nombre} · desde ${shiftStart ? formatTime(shiftStart) : ''}`;
+    renderTurnoTareas();
+    return;
+  }
+
+  document.getElementById('turnoSelectView').style.display = 'block';
+  document.getElementById('turnoActiveView').style.display = 'none';
+
+  grid.innerHTML = employees.map(emp => {
+    const empActive = turnos.find(t => t.activo && t.empleado_id === emp.id);
+    return `<div class="emp-card ${empActive ? 'active-shift' : ''}" onclick="selectEmployee(${emp.id}, '${emp.nombre}')">
+      <div class="emp-name">${emp.nombre}</div>
+      <div class="emp-status">${empActive ? '🟢 En turno' : 'Sin turno'}</div>
+    </div>`;
+  }).join('');
+}
+
+function renderTurnoTareas() {
+  const list = document.getElementById('turnoTareasList');
+  const today = todayStr();
+  const apertura = tareas.filter(t => t.tipo === 'apertura');
+  if (!apertura.length) { list.innerHTML = '<div class="text-muted" style="font-size:12px">Sin tareas de apertura configuradas.</div>'; return; }
+  list.innerHTML = apertura.map(t => {
+    const done = t.ultima_hecha === today;
+    return `<div class="task-item">
+      <div class="task-check ${done?'done':''}" onclick="toggleTask(${t.id})">${done?'✓':''}</div>
+      <div class="task-body">
+        <div class="task-name ${done?'done':''}">${t.descripcion}</div>
+        ${t.minutos ? `<div class="task-meta">~${t.minutos} min</div>` : ''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function selectEmployee(id, nombre) {
+  const alreadyActive = turnos.find(t => t.activo && t.empleado_id === id);
+  if (alreadyActive) {
+    // They are already in shift — take over view
+    currentEmployee = {id, nombre};
+    shiftStart = new Date(alreadyActive.inicio);
+    startTimer();
+    renderTurnoScreen();
+    return;
+  }
+  // Start new shift
+  currentEmployee = {id, nombre};
+  shiftStart = new Date();
+  const res = await dbPost('baros_turnos', {
+    empleado_id: id,
+    inicio: shiftStart.toISOString(),
+    activo: true
+  });
+  if (res && res[0]) {
+    turnos.unshift(res[0]);
+    startTimer();
+    renderTurnoScreen();
+  }
+}
+
+function startTimer() {
+  if (timerInterval) clearInterval(timerInterval);
+  timerInterval = setInterval(() => {
+    if (!shiftStart) return;
+    const diff = Date.now() - shiftStart.getTime();
+    document.getElementById('timerDisplay').textContent = formatDuration(diff);
+  }, 1000);
+}
+
+function endShift() {
+  const diff = Date.now() - shiftStart.getTime();
+  const horas = diff / 3600000;
+  const pago = Math.round(horas * valorHora);
+  document.getElementById('endShiftSummary').innerHTML =
+    `<b>${currentEmployee.nombre}</b><br>
+    Duración: ${formatDuration(diff)}<br>
+    Horas: ${horas.toFixed(2)}<br>
+    Valor a pagar: <span class="text-accent">$${pago.toLocaleString('es-CO')}</span>`;
+  openModal('modalEndShift');
+}
+
+async function confirmEndShift() {
+  closeModal('modalEndShift');
+  const fin = new Date();
+  const diff = fin - shiftStart;
+  const horas = diff / 3600000;
+  const pago = Math.round(horas * valorHora);
+
+  const active = turnos.find(t => t.activo && t.empleado_id === currentEmployee.id);
+  if (active) {
+    await dbPatch('baros_turnos', `id=eq.${active.id}`, {
+      fin: fin.toISOString(),
+      activo: false,
+      horas: parseFloat(horas.toFixed(2)),
+      valor_pagar: pago,
+      pagado: false
+    });
+  }
+
+  clearInterval(timerInterval);
+  currentEmployee = null;
+  shiftStart = null;
+  await loadAll();
+  renderTurnoScreen();
+}
+
+// =============================================
+// TAREAS SCREEN
+// =============================================
+function renderTareasScreen() {
+  const today = todayStr();
+  const hasTurno = turnos.find(t => t.activo);
+
+  document.getElementById('tareasSinTurno').style.display = hasTurno ? 'none' : 'block';
+  document.getElementById('tareasContent').style.display = hasTurno ? 'block' : 'none';
+
+  renderTaskList('listApertura', tareas.filter(t => t.tipo === 'apertura'), today);
+  renderTaskList('listCierre', tareas.filter(t => t.tipo === 'cierre'), today);
+
+  // Recurrentes: show only if due today
+  const recurrentes = tareas.filter(t => {
+    if (t.tipo !== 'recurrente') return false;
+    if (!t.ultima_hecha) return true;
+    const last = new Date(t.ultima_hecha);
+    const freq = t.frecuencia_dias || 7;
+    const next = new Date(last);
+    next.setDate(next.getDate() + freq);
+    return new Date(today) >= next;
+  });
+  renderTaskList('listRecurrente', recurrentes, today);
+
+  // Asignadas hoy
+  const empId = currentEmployee?.id;
+  const asignadas = tareas.filter(t =>
+    t.tipo === 'asignada' &&
+    t.fecha_asignada === today &&
+    (!empId || t.empleado_id === empId)
+  );
+  renderTaskList('listAsignada', asignadas, today);
+}
+
+function renderTaskList(containerId, list, today) {
+  const el = document.getElementById(containerId);
+  if (!list.length) { el.innerHTML = '<div class="empty-state" style="padding:12px 0"><span style="color:var(--muted);font-size:12px">Sin tareas</span></div>'; return; }
+  el.innerHTML = list.map(t => {
+    const done = t.ultima_hecha === today;
+    return `<div class="task-item">
+      <div class="task-check ${done?'done':''}" onclick="toggleTask(${t.id})">${done?'✓':''}</div>
+      <div class="task-body">
+        <div class="task-name ${done?'done':''}">${t.descripcion}</div>
+        <div class="task-meta">
+          ${t.minutos ? `~${t.minutos} min` : ''}
+          ${t.pasos ? `<span style="margin-left:8px;cursor:pointer;color:var(--accent)" onclick="showTaskDetail(${t.id})">Ver pasos ›</span>` : ''}
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function toggleTask(id) {
+  const t = tareas.find(x => x.id === id);
+  if (!t) return;
+  const today = todayStr();
+  const newVal = t.ultima_hecha === today ? null : today;
+  await dbPatch('baros_tareas', `id=eq.${id}`, {ultima_hecha: newVal});
+  t.ultima_hecha = newVal;
+  renderTareasScreen();
+  renderTurnoTareas();
+}
+
+function showTaskDetail(id) {
+  const t = tareas.find(x => x.id === id);
+  if (!t) return;
+  document.getElementById('detailTaskName').textContent = t.descripcion;
+  document.getElementById('detailTaskMins').textContent = t.minutos ? `~${t.minutos} minutos` : '';
+  document.getElementById('detailTaskPasos').textContent = t.pasos || 'Sin instrucciones detalladas.';
+  openModal('modalTaskDetail');
+}
+
+// =============================================
+// CIERRE SCREEN
+// =============================================
+function renderCierreScreen() {
+  const list = document.getElementById('ventasList');
+  const card = document.getElementById('ventasHistorial');
+  if (ventas.length) {
+    card.style.display = 'block';
+    list.innerHTML = ventas.slice(0,5).map(v => `
+      <div class="historial-item">
+        <div class="flex-between">
+          <div style="font-size:12px;color:var(--muted)">${formatDate(v.fecha)}</div>
+          <div style="font-size:14px;color:var(--accent)">$${parseInt(v.venta).toLocaleString('es-CO')}</div>
+        </div>
+        ${v.observaciones ? `<div style="font-size:11px;color:var(--muted);margin-top:4px">${v.observaciones}</div>` : ''}
+      </div>
+    `).join('');
+  } else { card.style.display = 'none'; }
+}
+
+async function saveVenta() {
+  const venta = document.getElementById('ventaInput').value;
+  const obs = document.getElementById('obsInput').value;
+  if (!venta) { alert('Ingresa el valor de venta'); return; }
+  await dbPost('baros_ventas', {
+    fecha: new Date().toISOString(),
+    venta: parseFloat(venta),
+    observaciones: obs,
+    empleado_id: currentEmployee?.id || null
+  });
+  document.getElementById('ventaInput').value = '';
+  document.getElementById('obsInput').value = '';
+  ventas = await dbGet('baros_ventas', 'order=fecha.desc&limit=30');
+  renderCierreScreen();
+  alert('✅ Cierre guardado');
+}
+
+// =============================================
+// ADMIN CONTENT
+// =============================================
+function renderAdminContent() {
+  renderHistorial();
+  renderEmpleadosAdmin();
+  renderTareasAdmin();
+  renderVentasAdmin();
+  renderAsignarSelect();
+  document.getElementById('valorHoraDisplay').textContent = `$${valorHora.toLocaleString('es-CO')} / hora`;
+}
+
+function renderHistorial() {
+  const el = document.getElementById('historialList');
+  const cerrados = turnos.filter(t => !t.activo);
+  if (!cerrados.length) { el.innerHTML = '<div class="text-muted" style="font-size:12px">Sin turnos registrados aún.</div>'; return; }
+  el.innerHTML = cerrados.map(t => {
+    const emp = employees.find(e => e.id === t.empleado_id);
+    return `<div class="historial-item">
+      <div class="historial-top">
+        <div class="historial-name">${emp?.nombre || 'Empleado'}</div>
+        <div class="historial-valor">$${(t.valor_pagar||0).toLocaleString('es-CO')}</div>
+      </div>
+      <div class="historial-meta">${formatDate(t.inicio)} · ${t.horas||0}h</div>
+      <div class="mt-8">
+        ${t.pagado
+          ? '<span class="paid-badge">✓ Pagado</span>'
+          : `<span class="unpaid-badge" onclick="marcarPagado(${t.id})">Marcar pagado</span>`}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function marcarPagado(id) {
+  await dbPatch('baros_turnos', `id=eq.${id}`, {pagado: true});
+  const t = turnos.find(x => x.id === id);
+  if (t) t.pagado = true;
+  renderHistorial();
+}
+
+function renderEmpleadosAdmin() {
+  const el = document.getElementById('empleadosList');
+  el.innerHTML = employees.map(e => `
+    <div class="admin-row">
+      <div class="admin-row-label">${e.nombre}</div>
+      <button class="btn btn-secondary btn-sm" style="color:var(--danger);border-color:var(--danger)" onclick="deleteEmpleado(${e.id})">Eliminar</button>
+    </div>
+  `).join('');
+}
+
+async function addEmpleado() {
+  const nombre = document.getElementById('newEmpName').value.trim();
+  if (!nombre) return;
+  const res = await dbPost('baros_empleados', {nombre});
+  if (res && res[0]) employees.push(res[0]);
+  document.getElementById('newEmpName').value = '';
+  closeModal('modalAddEmpleado');
+  renderEmpleadosAdmin();
+  renderTurnoScreen();
+  renderAsignarSelect();
+}
+
+async function deleteEmpleado(id) {
+  if (!confirm('¿Eliminar este empleado?')) return;
+  await dbDelete('baros_empleados', `id=eq.${id}`);
+  employees = employees.filter(e => e.id !== id);
+  renderEmpleadosAdmin();
+  renderTurnoScreen();
+}
+
+function renderTareasAdmin() {
+  const el = document.getElementById('adminTareasList');
+  el.innerHTML = tareas.filter(t => t.tipo !== 'asignada').map(t => `
+    <div class="admin-row">
+      <div>
+        <div class="admin-row-label">${t.descripcion}</div>
+        <div class="admin-row-sub">${tipoLabel(t.tipo)}${t.frecuencia_dias ? ` · cada ${t.frecuencia_dias} días` : ''}</div>
+      </div>
+      <button class="btn btn-secondary btn-sm" style="color:var(--danger);border-color:var(--danger)" onclick="deleteTarea(${t.id})">✕</button>
+    </div>
+  `).join('') || '<div class="text-muted" style="font-size:12px">Sin tareas configuradas.</div>';
+}
+
+async function addTarea() {
+  const desc = document.getElementById('newTareaDesc').value.trim();
+  const tipo = document.getElementById('newTareaTipo').value;
+  const mins = document.getElementById('newTareaMins').value;
+  const pasos = document.getElementById('newTareaPasos').value.trim();
+  const freq = document.getElementById('newTareaFreq').value;
+  if (!desc) return;
+  const data = {descripcion: desc, tipo, minutos: mins ? parseInt(mins) : null, pasos: pasos || null};
+  if (tipo === 'recurrente') data.frecuencia_dias = parseInt(freq) || 7;
+  const res = await dbPost('baros_tareas', data);
+  if (res && res[0]) tareas.push(res[0]);
+  closeModal('modalAddTarea');
+  document.getElementById('newTareaDesc').value = '';
+  document.getElementById('newTareaMins').value = '';
+  document.getElementById('newTareaPasos').value = '';
+  renderTareasAdmin();
+}
+
+async function deleteTarea(id) {
+  if (!confirm('¿Eliminar esta tarea?')) return;
+  await dbDelete('baros_tareas', `id=eq.${id}`);
+  tareas = tareas.filter(t => t.id !== id);
+  renderTareasAdmin();
+  renderTareasScreen();
+}
+
+async function saveValorHora() {
+  const val = document.getElementById('newValorHora').value;
+  if (!val) return;
+  valorHora = parseFloat(val);
+  await dbPatch('baros_config', 'key=eq.valor_hora', {value: String(valorHora)});
+  closeModal('modalValorHora');
+  document.getElementById('valorHoraDisplay').textContent = `$${valorHora.toLocaleString('es-CO')} / hora`;
+}
+
+function renderAsignarSelect() {
+  const sel = document.getElementById('asignarEmpleado');
+  sel.innerHTML = employees.map(e => `<option value="${e.id}">${e.nombre}</option>`).join('');
+}
+
+async function asignarTarea() {
+  const empId = document.getElementById('asignarEmpleado').value;
+  const desc = document.getElementById('asignarDesc').value.trim();
+  const mins = document.getElementById('asignarMins').value;
+  const pasos = document.getElementById('asignarPasos').value.trim();
+  if (!desc) { alert('Escribe la descripción de la tarea'); return; }
+  const data = {
+    descripcion: desc,
+    tipo: 'asignada',
+    empleado_id: parseInt(empId),
+    fecha_asignada: todayStr(),
+    minutos: mins ? parseInt(mins) : null,
+    pasos: pasos || null
+  };
+  const res = await dbPost('baros_tareas', data);
+  if (res && res[0]) tareas.push(res[0]);
+  document.getElementById('asignarDesc').value = '';
+  document.getElementById('asignarMins').value = '';
+  document.getElementById('asignarPasos').value = '';
+  alert('✅ Tarea asignada');
+  renderTareasScreen();
+}
+
+function renderVentasAdmin() {
+  const el = document.getElementById('adminVentasList');
+  if (!ventas.length) { el.innerHTML = '<div class="text-muted" style="font-size:12px">Sin ventas registradas.</div>'; return; }
+  el.innerHTML = ventas.slice(0,10).map(v => `
+    <div class="admin-row">
+      <div>
+        <div class="admin-row-label">$${parseInt(v.venta).toLocaleString('es-CO')}</div>
+        <div class="admin-row-sub">${formatDate(v.fecha)}${v.observaciones ? ' · '+v.observaciones.slice(0,40) : ''}</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+// =============================================
+// MODAL
+// =============================================
+function openModal(id) {
+  document.getElementById(id).classList.add('open');
+  if (id === 'modalAddTarea') {
+    document.getElementById('newTareaTipo').onchange = function() {
+      document.getElementById('frecuenciaField').style.display = this.value === 'recurrente' ? 'block' : 'none';
+    };
+  }
+}
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+document.querySelectorAll('.modal-overlay').forEach(m => {
+  m.addEventListener('click', e => { if(e.target === m) m.classList.remove('open'); });
+});
+
+// =============================================
+// UTILS
+// =============================================
+function todayStr() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+function formatTime(d) {
+  return d.toLocaleTimeString('es-CO', {hour:'2-digit', minute:'2-digit'});
+}
+function formatDuration(ms) {
+  const h = Math.floor(ms/3600000);
+  const m = Math.floor((ms%3600000)/60000);
+  const s = Math.floor((ms%60000)/1000);
+  return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+}
+function formatDate(iso) {
+  if (!iso) return '';
+  const d = new Date(iso);
+  return d.toLocaleDateString('es-CO', {day:'2-digit', month:'short', year:'numeric'});
+}
+function tipoLabel(tipo) {
+  return {apertura:'Apertura', cierre:'Cierre', recurrente:'Periódica', asignada:'Asignada'}[tipo] || tipo;
+}
+
+// =============================================
+// BOOT
+// =============================================
+init();
+</script>
+
+</body>
+</html>
