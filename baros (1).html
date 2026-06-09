@@ -1,0 +1,945 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>BAROS</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Fraunces:ital,wght@0,300;0,600;1,300&display=swap');
+  :root {
+    --bg: #0e0e0e; --surface: #181818; --surface2: #222222;
+    --border: #2e2e2e; --accent: #c8f060; --accent2: #f0a840;
+    --danger: #f06060; --text: #f0ede8; --muted: #888; --radius: 12px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  body { font-family: 'DM Mono', monospace; background: var(--bg); color: var(--text); min-height: 100vh; max-width: 480px; margin: 0 auto; padding-bottom: 80px; }
+  .app-header { padding: 20px 20px 12px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; background: var(--bg); z-index: 100; }
+  .app-logo { font-family: 'Fraunces', serif; font-size: 28px; font-weight: 600; letter-spacing: -1px; color: var(--accent); }
+  .header-right { display: flex; align-items: center; gap: 10px; }
+  .admin-badge { font-size: 10px; background: var(--accent); color: #0e0e0e; padding: 3px 8px; border-radius: 20px; font-weight: 500; display: none; }
+  .admin-badge.visible { display: block; }
+  .btn-icon { background: var(--surface); border: 1px solid var(--border); color: var(--text); width: 36px; height: 36px; border-radius: 8px; font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+  .bottom-nav { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 480px; background: var(--surface); border-top: 1px solid var(--border); display: flex; z-index: 100; }
+  .nav-item { flex: 1; padding: 10px 4px 12px; display: flex; flex-direction: column; align-items: center; gap: 3px; cursor: pointer; border: none; background: none; color: var(--muted); font-family: 'DM Mono', monospace; font-size: 9px; transition: color 0.2s; position: relative; }
+  .nav-item .icon { font-size: 20px; }
+  .nav-item.active { color: var(--accent); }
+  .screen { display: none; padding: 16px; }
+  .screen.active { display: block; }
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; margin-bottom: 12px; }
+  .card-title { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px; }
+  .btn { width: 100%; padding: 14px; border-radius: var(--radius); border: none; font-family: 'DM Mono', monospace; font-size: 13px; font-weight: 500; cursor: pointer; transition: opacity 0.2s, transform 0.1s; }
+  .btn:active { transform: scale(0.98); opacity: 0.85; }
+  .btn-primary { background: var(--accent); color: #0e0e0e; }
+  .btn-danger { background: var(--danger); color: white; }
+  .btn-secondary { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
+  .btn-sm { padding: 7px 12px; font-size: 11px; width: auto; border-radius: 8px; }
+  .employee-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 16px; }
+  .emp-card { background: var(--surface2); border: 2px solid var(--border); border-radius: var(--radius); padding: 14px 10px; text-align: center; cursor: pointer; transition: all 0.2s; }
+  .emp-card:active { transform: scale(0.97); }
+  .emp-card.selected { border-color: var(--accent); background: #1e2a10; }
+  .emp-card .emp-name { font-size: 13px; font-weight: 500; }
+  .emp-card .emp-status { font-size: 10px; color: var(--muted); margin-top: 4px; }
+  .emp-card.active-shift .emp-status { color: var(--accent); }
+  .turno-info { display: flex; align-items: center; justify-content: space-between; padding: 12px 0; }
+  .turno-timer { font-family: 'Fraunces', serif; font-size: 36px; font-weight: 300; color: var(--accent); letter-spacing: -1px; }
+  .turno-meta { font-size: 11px; color: var(--muted); margin-top: 4px; }
+  .task-item { display: flex; align-items: flex-start; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--border); }
+  .task-item:last-child { border-bottom: none; }
+  .task-check { width: 22px; height: 22px; min-width: 22px; border: 2px solid var(--border); border-radius: 6px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 12px; transition: all 0.2s; background: var(--surface2); }
+  .task-check.done { background: var(--accent); border-color: var(--accent); color: #0e0e0e; }
+  .task-body { flex: 1; }
+  .task-name { font-size: 13px; line-height: 1.4; }
+  .task-name.done { text-decoration: line-through; color: var(--muted); }
+  .task-meta { font-size: 10px; color: var(--muted); margin-top: 3px; }
+  .input-field { width: 100%; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 12px; color: var(--text); font-family: 'DM Mono', monospace; font-size: 14px; margin-bottom: 10px; }
+  .input-field:focus { outline: none; border-color: var(--accent); }
+  textarea.input-field { resize: vertical; min-height: 80px; }
+  label.field-label { font-size: 11px; color: var(--muted); display: block; margin-bottom: 6px; }
+  .pin-screen { display: flex; flex-direction: column; align-items: center; padding: 40px 24px; }
+  .pin-title { font-family: 'Fraunces', serif; font-size: 22px; font-weight: 300; margin-bottom: 8px; }
+  .pin-dots { display: flex; gap: 12px; margin: 24px 0; }
+  .pin-dot { width: 14px; height: 14px; border-radius: 50%; border: 2px solid var(--border); transition: all 0.2s; }
+  .pin-dot.filled { background: var(--accent); border-color: var(--accent); }
+  .pin-pad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; width: 100%; max-width: 280px; }
+  .pin-key { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 18px; font-family: 'Fraunces', serif; font-size: 22px; font-weight: 300; color: var(--text); cursor: pointer; text-align: center; transition: all 0.15s; }
+  .pin-key:active { background: var(--surface2); transform: scale(0.95); }
+  .pin-error { color: var(--danger); font-size: 12px; margin-top: 12px; }
+  .admin-section { margin-bottom: 20px; }
+  .admin-section-title { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; padding-bottom: 6px; border-bottom: 1px solid var(--border); }
+  .admin-row { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #1e1e1e; gap: 8px; }
+  .admin-row:last-child { border-bottom: none; }
+  .admin-row-label { font-size: 13px; flex: 1; }
+  .admin-row-sub { font-size: 11px; color: var(--muted); }
+  .historial-item { padding: 12px 0; border-bottom: 1px solid var(--border); }
+  .historial-item:last-child { border-bottom: none; }
+  .historial-top { display: flex; justify-content: space-between; align-items: center; }
+  .historial-name { font-size: 14px; font-weight: 500; }
+  .historial-valor { font-size: 13px; color: var(--accent); }
+  .historial-meta { font-size: 11px; color: var(--muted); margin-top: 4px; }
+  .paid-badge { font-size: 9px; padding: 2px 7px; border-radius: 10px; background: #1e2a10; color: var(--accent); border: 1px solid var(--accent); }
+  .unpaid-badge { font-size: 9px; padding: 2px 7px; border-radius: 10px; background: #2a1010; color: var(--danger); border: 1px solid var(--danger); cursor: pointer; }
+  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.75); z-index: 200; align-items: flex-end; justify-content: center; }
+  .modal-overlay.open { display: flex; }
+  .modal { background: var(--surface); border-radius: 20px 20px 0 0; padding: 24px 20px 36px; width: 100%; max-width: 480px; max-height: 85vh; overflow-y: auto; }
+  .modal-title { font-family: 'Fraunces', serif; font-size: 20px; font-weight: 300; margin-bottom: 16px; }
+  .modal-close { float: right; background: none; border: none; color: var(--muted); font-size: 20px; cursor: pointer; padding: 0; }
+  .empty-state { text-align: center; padding: 32px 16px; color: var(--muted); font-size: 13px; }
+  .empty-state .big { font-size: 32px; margin-bottom: 8px; }
+  select.input-field { appearance: none; }
+  .divider { height: 1px; background: var(--border); margin: 16px 0; }
+  .text-muted { color: var(--muted); font-size: 12px; }
+  .text-accent { color: var(--accent); }
+  .mt-8 { margin-top: 8px; }
+  .mt-12 { margin-top: 12px; }
+  .flex-between { display: flex; justify-content: space-between; align-items: center; }
+  /* RECETARIO */
+  .receta-cat { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; padding: 14px 0 6px; border-bottom: 1px solid var(--border); margin-bottom: 8px; }
+  .receta-item { padding: 10px 0; border-bottom: 1px solid #1e1e1e; cursor: pointer; }
+  .receta-item:last-child { border-bottom: none; }
+  .receta-name { font-size: 14px; }
+  .receta-sub { font-size: 11px; color: var(--muted); margin-top: 3px; }
+  .search-bar { width: 100%; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; color: var(--text); font-family: 'DM Mono', monospace; font-size: 13px; margin-bottom: 12px; }
+  .search-bar:focus { outline: none; border-color: var(--accent); }
+</style>
+</head>
+<body>
+
+<div class="app-header">
+  <div class="app-logo">BAROS</div>
+  <div class="header-right">
+    <span class="admin-badge" id="adminBadge">ADMIN</span>
+    <button class="btn-icon" onclick="handleHeaderBtn()">⚙</button>
+  </div>
+</div>
+
+<nav class="bottom-nav">
+  <button class="nav-item active" onclick="showScreen('turno')" id="nav-turno"><span class="icon">⏱</span><span>Turno</span></button>
+  <button class="nav-item" onclick="showScreen('tareas')" id="nav-tareas"><span class="icon">✓</span><span>Tareas</span></button>
+  <button class="nav-item" onclick="showScreen('recetas')" id="nav-recetas"><span class="icon">🍹</span><span>Recetas</span></button>
+  <button class="nav-item" onclick="showScreen('cierre')" id="nav-cierre"><span class="icon">📋</span><span>Cierre</span></button>
+  <button class="nav-item" onclick="showScreen('admin')" id="nav-admin"><span class="icon">🔐</span><span>Admin</span></button>
+</nav>
+
+<!-- TURNO -->
+<div class="screen active" id="screen-turno">
+  <div id="turnoSelectView">
+    <div class="card">
+      <div class="card-title">¿Quién está trabajando?</div>
+      <div class="employee-grid" id="employeeGrid"></div>
+    </div>
+  </div>
+  <div id="turnoActiveView" style="display:none">
+    <div class="card">
+      <div class="card-title">TURNO EN CURSO</div>
+      <div class="turno-info">
+        <div>
+          <div class="turno-timer" id="timerDisplay">00:00:00</div>
+          <div class="turno-meta" id="turnoMeta"></div>
+        </div>
+        <div style="font-size:32px">🟢</div>
+      </div>
+      <button class="btn btn-danger" onclick="endShift()">Terminar turno</button>
+    </div>
+    <div class="card">
+      <div class="card-title">Tareas de apertura pendientes</div>
+      <div id="turnoTareasList"></div>
+    </div>
+  </div>
+</div>
+
+<!-- TAREAS -->
+<div class="screen" id="screen-tareas">
+  <div id="tareasSinTurno" class="empty-state" style="display:none">
+    <div class="big">⏱</div>Inicia tu turno primero para ver las tareas del día.
+  </div>
+  <div id="tareasContent">
+    <div class="card"><div class="card-title">🌅 Apertura</div><div id="listApertura"></div></div>
+    <div class="card"><div class="card-title">🔄 Periódicas</div><div id="listRecurrente"></div></div>
+    <div class="card"><div class="card-title">📌 Asignadas hoy</div><div id="listAsignada"></div></div>
+    <div class="card"><div class="card-title">🌙 Cierre</div><div id="listCierre"></div></div>
+  </div>
+</div>
+
+<!-- RECETAS -->
+<div class="screen" id="screen-recetas">
+  <input type="text" class="search-bar" placeholder="Buscar receta..." oninput="filterRecetas(this.value)">
+  <div id="recetasContainer"></div>
+</div>
+
+<!-- CIERRE -->
+<div class="screen" id="screen-cierre">
+  <div class="card">
+    <div class="card-title">Venta del día</div>
+    <label class="field-label">Valor total ($COP)</label>
+    <input type="number" class="input-field" id="ventaInput" placeholder="0">
+    <label class="field-label">Observaciones</label>
+    <textarea class="input-field" id="obsInput" placeholder="¿Algo importante que reportar?"></textarea>
+    <button class="btn btn-primary" onclick="saveVenta()">Guardar cierre</button>
+  </div>
+  <div class="card" id="ventasHistorial" style="display:none">
+    <div class="card-title">Últimos cierres</div>
+    <div id="ventasList"></div>
+  </div>
+</div>
+
+<!-- ADMIN -->
+<div class="screen" id="screen-admin">
+  <div id="adminLocked">
+    <div class="pin-screen">
+      <div class="pin-title">Panel Admin</div>
+      <div class="text-muted">Ingresa tu PIN</div>
+      <div class="pin-dots" id="pinDots">
+        <div class="pin-dot" id="d0"></div><div class="pin-dot" id="d1"></div>
+        <div class="pin-dot" id="d2"></div><div class="pin-dot" id="d3"></div>
+      </div>
+      <div class="pin-pad">
+        <button class="pin-key" onclick="pinKey('1')">1</button>
+        <button class="pin-key" onclick="pinKey('2')">2</button>
+        <button class="pin-key" onclick="pinKey('3')">3</button>
+        <button class="pin-key" onclick="pinKey('4')">4</button>
+        <button class="pin-key" onclick="pinKey('5')">5</button>
+        <button class="pin-key" onclick="pinKey('6')">6</button>
+        <button class="pin-key" onclick="pinKey('7')">7</button>
+        <button class="pin-key" onclick="pinKey('8')">8</button>
+        <button class="pin-key" onclick="pinKey('9')">9</button>
+        <button class="pin-key" onclick="pinKey('del')" style="font-size:16px">⌫</button>
+        <button class="pin-key" onclick="pinKey('0')">0</button>
+        <button class="pin-key" onclick="pinKey('ok')" style="font-size:14px;color:var(--accent)">OK</button>
+      </div>
+      <div class="pin-error" id="pinError"></div>
+    </div>
+  </div>
+  <div id="adminUnlocked" style="display:none">
+    <div class="admin-section">
+      <div class="admin-section-title">📋 Historial de turnos</div>
+      <div id="historialList"></div>
+    </div>
+    <div class="divider"></div>
+    <div class="admin-section">
+      <div class="admin-section-title">👥 Empleados</div>
+      <div id="empleadosList"></div>
+      <button class="btn btn-secondary mt-12" onclick="openModal('modalAddEmpleado')">+ Añadir empleado</button>
+    </div>
+    <div class="divider"></div>
+    <div class="admin-section">
+      <div class="admin-section-title">💰 Valor por hora</div>
+      <div class="admin-row">
+        <div><div class="admin-row-label" id="valorHoraDisplay">$8.500 / hora</div><div class="admin-row-sub">Base para cálculo de sueldos</div></div>
+        <button class="btn btn-secondary btn-sm" onclick="openModal('modalValorHora')">Editar</button>
+      </div>
+    </div>
+    <div class="divider"></div>
+    <div class="admin-section">
+      <div class="admin-section-title">✓ Tareas configuradas</div>
+      <div id="adminTareasList"></div>
+      <button class="btn btn-secondary mt-12" onclick="openModal('modalAddTarea')">+ Nueva tarea</button>
+    </div>
+    <div class="divider"></div>
+    <div class="admin-section">
+      <div class="admin-section-title">📌 Asignar tarea manual hoy</div>
+      <label class="field-label">Empleado</label>
+      <select class="input-field" id="asignarEmpleado"></select>
+      <label class="field-label">Descripción</label>
+      <input type="text" class="input-field" id="asignarDesc" placeholder="Ej: Limpiar nevera">
+      <label class="field-label">Minutos estimados</label>
+      <input type="number" class="input-field" id="asignarMins" placeholder="30">
+      <label class="field-label">Pasos / instrucciones (opcional)</label>
+      <textarea class="input-field" id="asignarPasos" placeholder="Paso 1..."></textarea>
+      <button class="btn btn-primary" onclick="asignarTarea()">Asignar tarea</button>
+    </div>
+    <div class="divider"></div>
+    <div class="admin-section">
+      <div class="admin-section-title">💵 Ventas registradas</div>
+      <div id="adminVentasList"></div>
+    </div>
+    <button class="btn btn-secondary mt-12" onclick="lockAdmin()">Cerrar panel admin</button>
+  </div>
+</div>
+
+<!-- MODALS -->
+<div class="modal-overlay" id="modalAddEmpleado">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('modalAddEmpleado')">✕</button>
+    <div class="modal-title">Nuevo empleado</div>
+    <label class="field-label">Nombre</label>
+    <input type="text" class="input-field" id="newEmpName" placeholder="Nombre completo">
+    <button class="btn btn-primary mt-12" onclick="addEmpleado()">Guardar</button>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modalValorHora">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('modalValorHora')">✕</button>
+    <div class="modal-title">Valor por hora</div>
+    <label class="field-label">$ COP por hora</label>
+    <input type="number" class="input-field" id="newValorHora" placeholder="8500">
+    <button class="btn btn-primary mt-12" onclick="saveValorHora()">Guardar</button>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modalAddTarea">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('modalAddTarea')">✕</button>
+    <div class="modal-title">Nueva tarea</div>
+    <label class="field-label">Descripción</label>
+    <input type="text" class="input-field" id="newTareaDesc" placeholder="Ej: Limpiar estufa">
+    <label class="field-label">Tipo</label>
+    <select class="input-field" id="newTareaTipo" onchange="document.getElementById('frecuenciaField').style.display=this.value==='recurrente'?'block':'none'">
+      <option value="apertura">Apertura (diaria)</option>
+      <option value="cierre">Cierre (diaria)</option>
+      <option value="recurrente">Periódica (cada X días)</option>
+    </select>
+    <div id="frecuenciaField" style="display:none">
+      <label class="field-label">Cada cuántos días</label>
+      <input type="number" class="input-field" id="newTareaFreq" placeholder="7" value="7">
+    </div>
+    <label class="field-label">Minutos estimados</label>
+    <input type="number" class="input-field" id="newTareaMins" placeholder="15">
+    <label class="field-label">Pasos / instrucciones (opcional)</label>
+    <textarea class="input-field" id="newTareaPasos" placeholder="Paso 1..."></textarea>
+    <button class="btn btn-primary mt-12" onclick="addTarea()">Guardar tarea</button>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modalTaskDetail">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('modalTaskDetail')">✕</button>
+    <div class="modal-title" id="detailTaskName"></div>
+    <div class="text-muted" id="detailTaskMins"></div>
+    <div class="divider"></div>
+    <div id="detailTaskPasos" style="white-space:pre-wrap;font-size:13px;line-height:1.7;color:var(--text)"></div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modalReceta">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('modalReceta')">✕</button>
+    <div class="modal-title" id="modalRecetaNombre"></div>
+    <div style="font-size:11px;color:var(--accent);margin-bottom:12px" id="modalRecetaCat"></div>
+    <div class="divider"></div>
+    <div id="modalRecetaBody" style="font-size:13px;line-height:1.8;color:var(--text);white-space:pre-wrap"></div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modalEndShift">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('modalEndShift')">✕</button>
+    <div class="modal-title">¿Terminar turno?</div>
+    <div id="endShiftSummary" class="text-muted mt-8" style="font-size:13px;line-height:1.6"></div>
+    <div class="divider"></div>
+    <button class="btn btn-danger" onclick="confirmEndShift()">Sí, terminar turno</button>
+    <button class="btn btn-secondary mt-8" onclick="closeModal('modalEndShift')">Cancelar</button>
+  </div>
+</div>
+
+<script>
+// =============================================
+// SUPABASE
+// =============================================
+const SUPABASE_URL = 'https://uqwfzdabiutiljcrlohy.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVxd2Z6ZGFiaXV0aWxqY3Jsb2h5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAwMTMxNDYsImV4cCI6MjA5NTU4OTE0Nn0.3FaMPS137S5-zFNDEazbvqrwBDDPtcmEFgLcbzG8X8Y';
+const H = { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json' };
+const dbGet = (t, q='') => fetch(`${SUPABASE_URL}/rest/v1/${t}?${q}`, {headers: H}).then(r => r.json());
+const dbPost = (t, d) => fetch(`${SUPABASE_URL}/rest/v1/${t}`, {method:'POST', headers:{...H,'Prefer':'return=representation'}, body:JSON.stringify(d)}).then(r => r.json());
+const dbPatch = (t, q, d) => fetch(`${SUPABASE_URL}/rest/v1/${t}?${q}`, {method:'PATCH', headers:{...H,'Prefer':'return=minimal'}, body:JSON.stringify(d)});
+const dbDelete = (t, q) => fetch(`${SUPABASE_URL}/rest/v1/${t}?${q}`, {method:'DELETE', headers: H});
+
+// =============================================
+// RECETAS DATA (hardcoded, editable via admin futuro)
+// =============================================
+const RECETAS = [
+  // COCTELES
+  {cat:'Cócteles', nombre:'Mojito', prep:'1. Llenar coctelera de hielo\n2. Agregar shot de ron blanco\n3. Agregar shot de sirope\n4. Agregar hojas de hierbabuena previamente maceradas\n5. Agregar medio limón\n6. Agregar medio shot de triple sec verde\n7. Batir y servir en vaso con hielo\n8. Decorar con rodaja de limón y hierbabuena'},
+  {cat:'Cócteles', nombre:'Blue Margarita', prep:'1. Escarchar copa con azúcar\n2. Agregar medio limón\n3. Agregar shot de sirope\n4. Agregar triple sec azul\n5. Agregar shot de tequila\n6. Mezclar y servir'},
+  {cat:'Cócteles', nombre:'Coco Loco', prep:'1. Agregar shot de ron\n2. Agregar cucharada de leche en polvo\n3. Agregar limonada de coco\n4. Agregar 7 hielos\n5. Agregar agua que cubra los primeros hielos\n6. Decorar con coco rallado y cereza'},
+  {cat:'Cócteles', nombre:'Malibu Sunset', prep:'1. Escarchar copa con azúcar\n2. Agregar shot de granadina\n3. Agregar 4 hielos tamaño moderado\n4. Agregar shot de vodka (o tequila)\n5. Completar con jugo de naranja'},
+  {cat:'Cócteles', nombre:'Caipiriña', prep:'1. Macerar limón en el vaso\n2. Agregar 6 hielos medianos\n3. Agregar shot de ron blanco\n4. Echar los pedazos de limón\n5. Mezclar y servir'},
+  {cat:'Cócteles', nombre:'Sorpresa Tropical', prep:'1. Borde de granadina y escarchado con azúcar\n2. Macerar limón con dulce de maracuyá\n3. Agregar 6 hielos medianos\n4. Agregar shot de ron blanco\n5. Mezclar y servir'},
+  {cat:'Cócteles', nombre:'Daikiri', prep:'1. En coctelera agregar shot de limón\n2. Agregar shot de ron blanco\n3. Agregar shot de sirope\n4. Servir en copa previamente enfriada\n5. Decorar con rodaja de limón en el borde'},
+  {cat:'Cócteles', nombre:'Mi Patria Bandera', prep:'1. Agregar granadina (rojo)\n2. Agregar triple sec azul (azul)\n3. Agregar jugo de naranja (amarillo)\n4. Servir en capas sin mezclar'},
+  {cat:'Cócteles', nombre:'Tsunami (para compartir)', prep:'1. Agregar ron blanco\n2. Agregar limón macerado\n3. Agregar sirope simple\n4. Agregar curaçao\n5. Servir en recipiente grande para compartir — $48'},
+  // MOCKTAILS
+  {cat:'Mocktails', nombre:'Orion Azulito', prep:'1. Agregar 4 hielos\n2. Agregar jugo de medio limón\n3. Agregar medio macerado de limón\n4. Agregar triple sec azul\n5. Completar con soda\n6. Borde con triple sec azul y azúcar'},
+  {cat:'Mocktails', nombre:'Orion Sonrojado', prep:'1. Agregar 4 hielos\n2. Agregar jugo de medio limón\n3. Agregar medio macerado con frutos rojos\n4. Agregar granadina\n5. Completar con soda\n6. Borde con granadina y azúcar'},
+  {cat:'Mocktails', nombre:'Soda con Limón', prep:'1. Vaso con hielo\n2. Jugo de limón al gusto\n3. Completar con soda\n4. Decorar con rodaja de limón'},
+  // LIMONADAS
+  {cat:'Limonadas', nombre:'Limonada Natural', prep:'1. Macerar limón\n2. Llenar la mitad del vaso con hielos\n3. Agregar los pedazos de limón\n4. Completar con agua o soda\n5. Decorar con rodaja de limón'},
+  {cat:'Limonadas', nombre:'Limonada de Frutos Rojos', prep:'1. Macerar limón con dulce de frutos rojos\n2. Llenar la mitad del vaso con hielos\n3. Agregar los pedazos de limón\n4. Completar con agua o soda\n5. Decorar con rodaja de limón'},
+  {cat:'Limonadas', nombre:'Limonada de Hierbabuena', prep:'1. Macerar limón con hojas de hierbabuena\n2. Llenar la mitad del vaso con hielos\n3. Agregar los pedazos de limón\n4. Completar con agua o soda\n5. Decorar con rodaja de limón'},
+  // BEBIDAS CALIENTES
+  {cat:'Bebidas Calientes', nombre:'Aromática Sencilla (Hierbabuena)', prep:'1. Agua de aromática caliente\n2. Agregar hojas de hierbabuena\nNota: Si no hay agua, usar panela con unas hojas de hierbabuena'},
+  {cat:'Bebidas Calientes', nombre:'Aromática de Frutas', prep:'1. Agregar 2 cucharadas de frutos amarillos\n2. Agregar 1 cucharada de frutos rojos\n3. Agregar agua de aromática hasta llenar'},
+  {cat:'Bebidas Calientes', nombre:'Cappuccino', prep:'1. Preparar tinto\n2. Agregar leche con espuma\n3. Decorar con flor arriba de la espuma'},
+  {cat:'Bebidas Calientes', nombre:'Mocaccino', prep:'1. En el fondo del vaso poner una capa de chocolate\n2. Preparar tinto\n3. Agregar leche con espuma\n4. Decorar con flor arriba de la espuma'},
+  {cat:'Bebidas Calientes', nombre:'Vino Caliente', prep:'1. Escarchar copa con azúcar\n2. Calentar el vino\n3. Servir en copa escarchada'},
+  {cat:'Bebidas Calientes', nombre:'Milo Caliente', prep:'1. Calentar leche\n2. Agregar Milo al gusto\n3. Mezclar bien y servir'},
+  {cat:'Bebidas Calientes', nombre:'Canelazo', prep:'1. Preparar agua de panela con 5 paquetes de panela\n2. Agregar 2-3 shots de aguardiente\n3. Agregar 3 rodajas de limón\n4. Escarchar borde con azúcar\n5. Servir caliente'},
+  // BEBIDAS FRIAS
+  {cat:'Bebidas Frías', nombre:'Batido de Frutas', prep:'1. Agregar 5 hielos\n2. Agregar leche que tape los hielos\n3. Agregar pedazo de fruta\n4. Si es de chocolate: agregar cuchara de milo\n5. Decorar vaso con arequipe y chocolate\n6. Licuar y servir'},
+  {cat:'Bebidas Frías', nombre:'Milo Frío', prep:'1. Agregar 4-5 hielos\n2. Agregar leche fría\n3. Agregar Milo al gusto\n4. Mezclar bien y servir'},
+  // COMIDA - PAPAS
+  {cat:'Pa\' picar', nombre:'Salchipapa Sencilla', prep:'Personal $15 — Compartir $25\n\n1. Freír medio paquete de papas\n2. Cocinar 2 salchichas americanas\n3. Servir con salsas al gusto'},
+  {cat:'Pa\' picar', nombre:'Salchipapa Especial', prep:'Personal $18 — Compartir $28\n\n1. Freír medio paquete de papas\n2. Cocinar 2 salchichas americanas\n3. Agregar 2 tocinetas\n4. Agregar 2 huevos de codorniz\n5. Agregar 2 tajadas de queso en tiras\n6. Servir con salsas al gusto\nNota: Para compartir duplicar todas las cantidades'},
+  {cat:'Pa\' picar', nombre:'Choripapa', prep:'Personal $18 — Compartir $28\n\n1. Freír papas a la francesa\n2. Cocinar chorizo parrillero\n3. Agregar tocineta\n4. Agregar queso gratinado\n5. Agregar huevo de codorniz\n6. Servir con salsas al gusto'},
+  {cat:'Pa\' picar', nombre:'Mixto', prep:'Personal $18 — Compartir $28\n\n1. Freír papas a la francesa\n2. Cocinar salchicha americana y chorizo parrillero\n3. Agregar tocineta\n4. Agregar queso gratinado\n5. Agregar huevo de codorniz\n6. Servir con salsas al gusto'},
+  {cat:'Pa\' picar', nombre:'Nachos de la Casa', prep:'$19\n\n1. Abrir paquete de nachos\n2. Preparar carne molida\n3. Preparar pico de gallo (media cebolla y tomate)\n4. Agregar queso gratinado\n5. Agregar guacamole\n6. Servir todo sobre los nachos'},
+  // PERROS
+  {cat:'Pa\' picar', nombre:'Perro Sencillo', prep:'Personal $15 — Combo $25\n\n1. Pan artesanal\n2. Salchicha americana\n3. Tocineta\n4. Rodaja de queso mozzarella alrededor de la salchicha\n5. Papas ripio arriba\n6. Salsas al gusto'},
+  {cat:'Pa\' picar', nombre:'Perro Especial', prep:'Personal $20 — Combo $28\n\n1. Pan artesanal\n2. Salchicha americana\n3. Tocineta\n4. Guacamole\n5. Pico de gallo\n6. Queso mozzarella\n7. Huevos de codorniz\n8. Papa ripio arriba\n9. Salsas al gusto'},
+  {cat:'Pa\' picar', nombre:'Mini Arepas con Chorizo', prep:'$15\n\n1. Arepas de peto\n2. Chorizo parrillero\n3. Salsa de guacamole'},
+  // HAMBURGUESAS
+  {cat:'Hamburguesas', nombre:'Hamburguesa de Res', prep:'Personal $20 — Combo $28\n\n1. Calentar pan artesanal previamente\n2. Cebolla caramelizada con azúcar y salsa de carnes\n3. Capa de lechuga\n4. 2 tomates arriba\n5. Cebolla\n6. Carne (150g) con rodaja de queso\n7. Tocineta encima'},
+  {cat:'Hamburguesas', nombre:'Hamburguesa de Cerdo', prep:'Personal $20 — Combo $28\n\n1. Calentar pan artesanal previamente\n2. Cebolla caramelizada con azúcar y salsa de carnes\n3. Capa de lechuga\n4. 2 tomates arriba\n5. Cebolla\n6. Rodaja de piña asada\n7. Carne de cerdo (150g) con rodaja de queso\n8. Tocineta encima'},
+  {cat:'Hamburguesas', nombre:'Hamburguesa Doble Carne', prep:'Personal $25 — Combo $32\n\n1. Calentar pan artesanal previamente\n2. Cebolla caramelizada con azúcar y salsa de carnes\n3. Capa de lechuga\n4. 2 tomates arriba\n5. Cebolla\n6. Doble carne artesanal (300g) con rodaja de queso\n7. Tocineta encima'},
+  {cat:'Hamburguesas', nombre:'Hamburguesa Mixta', prep:'Personal $25 — Combo $32\n\n1. Calentar pan artesanal previamente\n2. Cebolla caramelizada con azúcar y salsa de carnes\n3. Capa de lechuga\n4. 2 tomates arriba\n5. Cebolla\n6. Carne de res (150g) + carne de cerdo (150g) con queso\n7. Tocineta encima'},
+];
+
+// =============================================
+// TAREAS INICIALES (se insertan si la BD está vacía)
+// =============================================
+const TAREAS_INICIALES = [
+  // APERTURA
+  {descripcion:'Baño en perfecto estado: lavar, trapear y dejar limpio', tipo:'apertura', minutos:20, pasos:'1. Lavar el baño completo\n2. Trapear el piso\n3. Dejar el trapero limpio y escurrido'},
+  {descripcion:'Barrer y trapear escaleras', tipo:'apertura', minutos:10, pasos:null},
+  {descripcion:'Barrer salón (correr cada mesa) y trapear zona asignada', tipo:'apertura', minutos:20, pasos:'1. Correr cada mesa para barrer bien debajo\n2. Trapear la zona asignada según el día'},
+  {descripcion:'Sacar basura si es día de recolección', tipo:'apertura', minutos:5, pasos:'Siempre que se saque la basura, colocar bolsa nueva inmediatamente'},
+  {descripcion:'Abrir ventanas, conectar computador e iniciar sesión', tipo:'apertura', minutos:5, pasos:null},
+  {descripcion:'Revisar y preparar hielo', tipo:'apertura', minutos:10, pasos:'1. Revisar si hay hielo\n2. Sacar lo que haya\n3. Hacer más hielo'},
+  {descripcion:'Poner a hervir agua', tipo:'apertura', minutos:5, pasos:null},
+  {descripcion:'Revisar stock de cerveza', tipo:'apertura', minutos:10, pasos:'Viernes y sábados siempre debe haber bastante Águila y Coronita. En general suficiente cerveza de todo.'},
+  {descripcion:'Revisar stock general y reportar faltantes por WhatsApp', tipo:'apertura', minutos:10, pasos:'Pasar lista de los insumos. Si hace falta algo escribir al WhatsApp.'},
+  // CIERRE
+  {descripcion:'No puede quedar ninguna borona — todas las mesas limpias', tipo:'cierre', minutos:10, pasos:null},
+  {descripcion:'Barrer y trapear barra y cocina', tipo:'cierre', minutos:15, pasos:null},
+  {descripcion:'Dejar trapero limpio', tipo:'cierre', minutos:5, pasos:null},
+  {descripcion:'Todos los trapos lavados y colgados', tipo:'cierre', minutos:10, pasos:'No mezclar trapos de cocina con trapos de baño'},
+  {descripcion:'Limpiar estufa completa y pared', tipo:'cierre', minutos:15, pasos:'Limpiar toda la estufa y la pared detrás'},
+  {descripcion:'Lavar bandeja de la estufa', tipo:'cierre', minutos:5, pasos:null},
+  {descripcion:'Lavar plato del microondas y limpiar por fuera y por dentro', tipo:'cierre', minutos:5, pasos:null},
+  {descripcion:'Limpiar mesa de la barra', tipo:'cierre', minutos:5, pasos:'En teoría esto no es tarea de cierre — debe hacerse cada que se usa'},
+  {descripcion:'Descargar orinal y taza — no dejar residuos reposados', tipo:'cierre', minutos:5, pasos:null},
+  {descripcion:'Desocupar y enjuagar cafetera', tipo:'cierre', minutos:5, pasos:'No solo regar el agua — limpiar correctamente'},
+  {descripcion:'Dejar escurridero de loza vacío y de pie', tipo:'cierre', minutos:5, pasos:'Para que no se repose agua y tenga mal olor'},
+  {descripcion:'Tener toda la loza lavada, seca y organizada', tipo:'cierre', minutos:15, pasos:'Solo en días muy pesados se puede dejar sobre la mesa'},
+  {descripcion:'Cerrar el gas', tipo:'cierre', minutos:1, pasos:null},
+  {descripcion:'Bolsa de basura de cocina: amarrar y tapar la caneca', tipo:'cierre', minutos:3, pasos:null},
+  // PERIODICAS
+  {descripcion:'Limpiar polvo y botellas de cócteles en la barra', tipo:'recurrente', frecuencia_dias:2, minutos:15, pasos:null},
+  {descripcion:'Rellenar Milo, azúcar etc. y limpiar tarros', tipo:'recurrente', frecuencia_dias:3, minutos:10, pasos:null},
+  {descripcion:'Limpiar vitrina de vasos: sacar todo y limpiar por dentro y fuera los 3 niveles', tipo:'recurrente', frecuencia_dias:7, minutos:20, pasos:null},
+  {descripcion:'Limpiar cafetera externamente', tipo:'recurrente', frecuencia_dias:3, minutos:10, pasos:null},
+  {descripcion:'Limpieza profunda nevera: sacar todo, lavar bandejas, limpiar por dentro y fuera', tipo:'recurrente', frecuencia_dias:7, minutos:30, pasos:'1. Sacar todo\n2. Lavar bandejas\n3. Limpiar interior\n4. Limpiar exterior'},
+  {descripcion:'Organizar gaseosas: quitar, limpiar tabla y barrer bien', tipo:'recurrente', frecuencia_dias:7, minutos:15, pasos:null},
+  {descripcion:'Limpiar polvo parte de los juegos y el bafle', tipo:'recurrente', frecuencia_dias:7, minutos:10, pasos:null},
+  {descripcion:'Trapear parte nevera y frente a la barra', tipo:'recurrente', frecuencia_dias:2, minutos:10, pasos:null},
+  {descripcion:'Limpiar vidrios de las neveras de cerveza', tipo:'recurrente', frecuencia_dias:7, minutos:10, pasos:null},
+  {descripcion:'Organizar cerveza y revisar fechas', tipo:'recurrente', frecuencia_dias:7, minutos:10, pasos:'Las cervezas siempre deben estar organizadas. Revisar fechas de las de menos rotación.'},
+  {descripcion:'Doblar y cortar servilletas', tipo:'recurrente', frecuencia_dias:3, minutos:10, pasos:null},
+  {descripcion:'Cambiar limones', tipo:'recurrente', frecuencia_dias:2, minutos:5, pasos:'Cada que llegan limones, lavarlos antes de colocarlos'},
+  {descripcion:'Limpiar motores de las licuadoras', tipo:'recurrente', frecuencia_dias:14, minutos:15, pasos:null},
+  {descripcion:'Lavar parrillas de la estufa', tipo:'recurrente', frecuencia_dias:3, minutos:15, pasos:null},
+  {descripcion:'Limpieza profunda estufa completa', tipo:'recurrente', frecuencia_dias:4, minutos:30, pasos:'Lavar parrillas, limpiar toda la estufa por fuera, patas y parte de atrás — TODO'},
+  {descripcion:'Limpiar estante de cocina: bajar todo, lavar loza y limpiar estantes', tipo:'recurrente', frecuencia_dias:7, minutos:25, pasos:null},
+  {descripcion:'Limpiar repisa: cambiar papel y limpiar todo lo que esté sobre ella', tipo:'recurrente', frecuencia_dias:7, minutos:15, pasos:null},
+  {descripcion:'Lavar canecas por dentro, fuera y la tapa', tipo:'recurrente', frecuencia_dias:7, minutos:15, pasos:null},
+  {descripcion:'Restregar piso cocina con jabón de loza, luego trapear', tipo:'recurrente', frecuencia_dias:7, minutos:20, pasos:'Usar escoba con fuerza para quitar la grasa, con agua y jabón líquido de loza. Luego pasar trapero y quitar bien el jabón.'},
+  {descripcion:'Lavar la olla', tipo:'recurrente', frecuencia_dias:7, minutos:20, pasos:'Cada que se cambia aceite, lavar a profundidad intentando quitar lo negro'},
+  {descripcion:'Limpiar cafetera por dentro', tipo:'recurrente', frecuencia_dias:15, minutos:20, pasos:null},
+  {descripcion:'Limpiar ventanas — parte de madera', tipo:'recurrente', frecuencia_dias:30, minutos:20, pasos:null},
+  {descripcion:'Limpiar entre baldosas de escaleras a fondo', tipo:'recurrente', frecuencia_dias:30, minutos:30, pasos:'Restregar bien entre las baldosas'},
+  {descripcion:'Limpiar neveras de cerveza por dentro y revisar fechas', tipo:'recurrente', frecuencia_dias:30, minutos:20, pasos:null},
+  {descripcion:'Trapear zona asignada del día', tipo:'recurrente', frecuencia_dias:1, minutos:15, pasos:'Lunes: barra y enfrente\nMartes: dos primeras sillas\nMiércoles: segundas sillas\nJueves: terceras\nViernes: cuartas\nSábado: quintas\nDomingo: zona rana'},
+  {descripcion:'Barrer y trapear detrás de la barra (correr nevera y limpiar)', tipo:'recurrente', frecuencia_dias:7, minutos:20, pasos:'Correr la nevera y hacer el aseo detrás. Sacar canastas y asear ahí también.'},
+  {descripcion:'Revisar huevos cocinados — si no hay, hacer', tipo:'recurrente', frecuencia_dias:1, minutos:15, pasos:'Para evitar que cuando pidan no haya y tampoco haya espacio para cocinarlos en el momento'},
+];
+
+// =============================================
+// STATE
+// =============================================
+const PIN = '1984';
+let isAdmin = false;
+let currentEmployee = null;
+let shiftStart = null;
+let timerInterval = null;
+let employees = [];
+let tareas = [];
+let turnos = [];
+let ventas = [];
+let valorHora = 8500;
+
+// =============================================
+// INIT
+// =============================================
+async function init() {
+  try {
+    const cfg = await dbGet('baros_config', 'key=eq.valor_hora');
+    if (cfg && cfg.length > 0) valorHora = parseFloat(cfg[0].value);
+    else await dbPost('baros_config', {key:'valor_hora', value: String(valorHora)});
+  } catch(e) {}
+  await loadAll();
+  await seedTareasIfEmpty();
+  renderTurnoScreen();
+  renderTareasScreen();
+  renderRecetas('');
+  startPolling();
+}
+
+async function seedTareasIfEmpty() {
+  if (tareas.length === 0) {
+    for (const t of TAREAS_INICIALES) {
+      const res = await dbPost('baros_tareas', t);
+      if (res && res[0]) tareas.push(res[0]);
+    }
+  }
+}
+
+async function loadAll() {
+  try {
+    const [emps, tar, tur, ven] = await Promise.all([
+      dbGet('baros_empleados', 'order=nombre.asc'),
+      dbGet('baros_tareas', 'order=tipo.asc'),
+      dbGet('baros_turnos', 'order=inicio.desc&limit=50'),
+      dbGet('baros_ventas', 'order=fecha.desc&limit=30')
+    ]);
+    employees = emps || [];
+    tareas = tar || [];
+    turnos = tur || [];
+    ventas = ven || [];
+    const active = turnos.find(t => t.activo);
+    if (active && !currentEmployee) {
+      currentEmployee = employees.find(e => e.id === active.empleado_id);
+      shiftStart = new Date(active.inicio);
+      startTimer();
+    }
+  } catch(e) { console.error('loadAll error', e); }
+}
+
+function startPolling() {
+  setInterval(async () => {
+    try {
+      const [tar, tur, ven] = await Promise.all([
+        dbGet('baros_tareas', 'order=tipo.asc'),
+        dbGet('baros_turnos', 'order=inicio.desc&limit=50'),
+        dbGet('baros_ventas', 'order=fecha.desc&limit=30')
+      ]);
+      tareas = tar || []; turnos = tur || []; ventas = ven || [];
+      renderTareasScreen();
+      if (isAdmin) renderAdminContent();
+    } catch(e) {}
+  }, 30000);
+}
+
+// =============================================
+// NAV
+// =============================================
+function showScreen(name) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('screen-' + name).classList.add('active');
+  document.getElementById('nav-' + name).classList.add('active');
+  if (name === 'admin' && isAdmin) renderAdminContent();
+  if (name === 'tareas') renderTareasScreen();
+  if (name === 'cierre') renderCierreScreen();
+}
+function handleHeaderBtn() { showScreen('admin'); }
+
+// =============================================
+// PIN
+// =============================================
+let pinBuffer = '';
+function pinKey(k) {
+  if (k === 'del') { pinBuffer = pinBuffer.slice(0,-1); }
+  else if (k === 'ok') { checkPin(); return; }
+  else if (pinBuffer.length < 4) { pinBuffer += k; }
+  renderPinDots();
+}
+function renderPinDots() {
+  for (let i=0; i<4; i++) document.getElementById('d'+i).classList.toggle('filled', i < pinBuffer.length);
+}
+function checkPin() {
+  if (pinBuffer === PIN) {
+    isAdmin = true; pinBuffer = ''; renderPinDots();
+    document.getElementById('pinError').textContent = '';
+    document.getElementById('adminLocked').style.display = 'none';
+    document.getElementById('adminUnlocked').style.display = 'block';
+    document.getElementById('adminBadge').classList.add('visible');
+    renderAdminContent();
+  } else {
+    document.getElementById('pinError').textContent = 'PIN incorrecto';
+    pinBuffer = ''; renderPinDots();
+  }
+}
+function lockAdmin() {
+  isAdmin = false; pinBuffer = ''; renderPinDots();
+  document.getElementById('adminLocked').style.display = 'block';
+  document.getElementById('adminUnlocked').style.display = 'none';
+  document.getElementById('adminBadge').classList.remove('visible');
+  showScreen('turno');
+}
+
+// =============================================
+// TURNO
+// =============================================
+function renderTurnoScreen() {
+  const active = turnos.find(t => t.activo);
+  if (active && currentEmployee) {
+    document.getElementById('turnoSelectView').style.display = 'none';
+    document.getElementById('turnoActiveView').style.display = 'block';
+    document.getElementById('turnoMeta').textContent = currentEmployee.nombre + ' · desde ' + (shiftStart ? formatTime(shiftStart) : '');
+    renderTurnoTareas();
+    return;
+  }
+  document.getElementById('turnoSelectView').style.display = 'block';
+  document.getElementById('turnoActiveView').style.display = 'none';
+  const grid = document.getElementById('employeeGrid');
+  grid.innerHTML = employees.map(emp => {
+    const ea = turnos.find(t => t.activo && t.empleado_id === emp.id);
+    return '<div class="emp-card ' + (ea ? 'active-shift' : '') + '" onclick="selectEmployee(' + emp.id + ',\'' + emp.nombre + '\')">' +
+      '<div class="emp-name">' + emp.nombre + '</div>' +
+      '<div class="emp-status">' + (ea ? '🟢 En turno' : 'Sin turno') + '</div></div>';
+  }).join('');
+}
+
+function renderTurnoTareas() {
+  const list = document.getElementById('turnoTareasList');
+  const today = todayStr();
+  const apertura = tareas.filter(t => t.tipo === 'apertura');
+  if (!apertura.length) { list.innerHTML = '<div class="text-muted" style="font-size:12px">Sin tareas de apertura.</div>'; return; }
+  list.innerHTML = apertura.map(t => {
+    const done = t.ultima_hecha === today;
+    return '<div class="task-item"><div class="task-check ' + (done?'done':'') + '" onclick="toggleTask(' + t.id + ')">' + (done?'✓':'') + '</div>' +
+      '<div class="task-body"><div class="task-name ' + (done?'done':'') + '">' + t.descripcion + '</div>' +
+      (t.minutos ? '<div class="task-meta">~' + t.minutos + ' min</div>' : '') + '</div></div>';
+  }).join('');
+}
+
+async function selectEmployee(id, nombre) {
+  const alreadyActive = turnos.find(t => t.activo && t.empleado_id === id);
+  if (alreadyActive) {
+    currentEmployee = {id, nombre};
+    shiftStart = new Date(alreadyActive.inicio);
+    startTimer(); renderTurnoScreen(); return;
+  }
+  currentEmployee = {id, nombre};
+  shiftStart = new Date();
+  const res = await dbPost('baros_turnos', {empleado_id: id, inicio: shiftStart.toISOString(), activo: true});
+  if (res && res[0]) turnos.unshift(res[0]);
+  startTimer(); renderTurnoScreen();
+}
+
+function startTimer() {
+  if (timerInterval) clearInterval(timerInterval);
+  timerInterval = setInterval(() => {
+    if (!shiftStart) return;
+    document.getElementById('timerDisplay').textContent = formatDuration(Date.now() - shiftStart.getTime());
+  }, 1000);
+}
+
+function endShift() {
+  const diff = Date.now() - shiftStart.getTime();
+  const horas = diff / 3600000;
+  const pago = Math.round(horas * valorHora);
+  document.getElementById('endShiftSummary').innerHTML =
+    '<b>' + currentEmployee.nombre + '</b><br>Duración: ' + formatDuration(diff) +
+    '<br>Horas: ' + horas.toFixed(2) +
+    '<br>Valor a pagar: <span class="text-accent">$' + pago.toLocaleString('es-CO') + '</span>';
+  openModal('modalEndShift');
+}
+
+async function confirmEndShift() {
+  closeModal('modalEndShift');
+  const fin = new Date();
+  const diff = fin - shiftStart;
+  const horas = diff / 3600000;
+  const pago = Math.round(horas * valorHora);
+  try {
+    const activos = await dbGet('baros_turnos', 'activo=eq.true&empleado_id=eq.' + currentEmployee.id);
+    const active = activos && activos[0];
+    if (active) {
+      await fetch(SUPABASE_URL + '/rest/v1/baros_turnos?id=eq.' + active.id, {
+        method: 'PATCH',
+        headers: {...H, 'Prefer': 'return=minimal'},
+        body: JSON.stringify({fin: fin.toISOString(), activo: false, horas: parseFloat(horas.toFixed(2)), valor_pagar: pago, pagado: false})
+      });
+    }
+  } catch(e) { console.error('Error terminando turno:', e); }
+  clearInterval(timerInterval); timerInterval = null;
+  currentEmployee = null; shiftStart = null;
+  await loadAll(); renderTurnoScreen();
+}
+
+// =============================================
+// TAREAS
+// =============================================
+function renderTareasScreen() {
+  const hasTurno = turnos.find(t => t.activo);
+  document.getElementById('tareasSinTurno').style.display = hasTurno ? 'none' : 'block';
+  document.getElementById('tareasContent').style.display = hasTurno ? 'block' : 'none';
+  if (!hasTurno) return;
+  const today = todayStr();
+  renderTaskList('listApertura', tareas.filter(t => t.tipo === 'apertura'), today);
+  renderTaskList('listCierre', tareas.filter(t => t.tipo === 'cierre'), today);
+  const recurrentes = tareas.filter(t => {
+    if (t.tipo !== 'recurrente') return false;
+    if (!t.ultima_hecha) return true;
+    const last = new Date(t.ultima_hecha);
+    const freq = t.frecuencia_dias || 7;
+    const next = new Date(last); next.setDate(next.getDate() + freq);
+    return new Date(today) >= next;
+  });
+  renderTaskList('listRecurrente', recurrentes, today);
+  const empId = currentEmployee ? currentEmployee.id : null;
+  const asignadas = tareas.filter(t => t.tipo === 'asignada' && t.fecha_asignada === today && (!empId || t.empleado_id === empId));
+  renderTaskList('listAsignada', asignadas, today);
+}
+
+function renderTaskList(cid, list, today) {
+  const el = document.getElementById(cid);
+  if (!list.length) { el.innerHTML = '<div style="padding:8px 0;font-size:12px;color:var(--muted)">Sin tareas pendientes</div>'; return; }
+  el.innerHTML = list.map(t => {
+    const done = t.ultima_hecha === today;
+    return '<div class="task-item">' +
+      '<div class="task-check ' + (done?'done':'') + '" onclick="toggleTask(' + t.id + ')">' + (done?'✓':'') + '</div>' +
+      '<div class="task-body"><div class="task-name ' + (done?'done':'') + '">' + t.descripcion + '</div>' +
+      '<div class="task-meta">' + (t.minutos ? '~' + t.minutos + ' min' : '') +
+      (t.pasos ? ' <span style="margin-left:8px;cursor:pointer;color:var(--accent)" onclick="showTaskDetail(' + t.id + ')">Ver pasos ›</span>' : '') +
+      '</div></div></div>';
+  }).join('');
+}
+
+async function toggleTask(id) {
+  const t = tareas.find(x => x.id === id);
+  if (!t) return;
+  const today = todayStr();
+  const newVal = t.ultima_hecha === today ? null : today;
+  await dbPatch('baros_tareas', 'id=eq.' + id, {ultima_hecha: newVal});
+  t.ultima_hecha = newVal;
+  renderTareasScreen(); renderTurnoTareas();
+}
+
+function showTaskDetail(id) {
+  const t = tareas.find(x => x.id === id);
+  if (!t) return;
+  document.getElementById('detailTaskName').textContent = t.descripcion;
+  document.getElementById('detailTaskMins').textContent = t.minutos ? '~' + t.minutos + ' minutos' : '';
+  document.getElementById('detailTaskPasos').textContent = t.pasos || 'Sin instrucciones detalladas.';
+  openModal('modalTaskDetail');
+}
+
+// =============================================
+// RECETAS
+// =============================================
+function renderRecetas(query) {
+  const q = query.toLowerCase();
+  const filtered = q ? RECETAS.filter(r => r.nombre.toLowerCase().includes(q) || r.cat.toLowerCase().includes(q)) : RECETAS;
+  const cats = [...new Set(filtered.map(r => r.cat))];
+  const container = document.getElementById('recetasContainer');
+  if (!filtered.length) { container.innerHTML = '<div class="empty-state"><div class="big">🔍</div>No se encontraron recetas</div>'; return; }
+  container.innerHTML = cats.map(cat => {
+    const items = filtered.filter(r => r.cat === cat);
+    return '<div class="card"><div class="receta-cat">' + cat + '</div>' +
+      items.map(r => '<div class="receta-item" onclick="showReceta(\'' + encodeURIComponent(r.nombre) + '\')">' +
+        '<div class="receta-name">' + r.nombre + '</div>' +
+        '<div class="receta-sub">' + cat + ' ›</div></div>').join('') + '</div>';
+  }).join('');
+}
+
+function filterRecetas(q) { renderRecetas(q); }
+
+function showReceta(encodedNombre) {
+  const nombre = decodeURIComponent(encodedNombre);
+  const r = RECETAS.find(x => x.nombre === nombre);
+  if (!r) return;
+  document.getElementById('modalRecetaNombre').textContent = r.nombre;
+  document.getElementById('modalRecetaCat').textContent = r.cat;
+  document.getElementById('modalRecetaBody').textContent = r.prep;
+  openModal('modalReceta');
+}
+
+// =============================================
+// CIERRE
+// =============================================
+function renderCierreScreen() {
+  const list = document.getElementById('ventasList');
+  const card = document.getElementById('ventasHistorial');
+  if (ventas.length) {
+    card.style.display = 'block';
+    list.innerHTML = ventas.slice(0,5).map(v =>
+      '<div class="historial-item"><div class="flex-between">' +
+      '<div style="font-size:12px;color:var(--muted)">' + formatDate(v.fecha) + '</div>' +
+      '<div style="font-size:14px;color:var(--accent)">$' + parseInt(v.venta).toLocaleString('es-CO') + '</div></div>' +
+      (v.observaciones ? '<div style="font-size:11px;color:var(--muted);margin-top:4px">' + v.observaciones + '</div>' : '') +
+      '</div>').join('');
+  } else { card.style.display = 'none'; }
+}
+
+async function saveVenta() {
+  const venta = document.getElementById('ventaInput').value;
+  const obs = document.getElementById('obsInput').value;
+  if (!venta) { alert('Ingresa el valor de venta'); return; }
+  await dbPost('baros_ventas', {fecha: new Date().toISOString(), venta: parseFloat(venta), observaciones: obs, empleado_id: currentEmployee ? currentEmployee.id : null});
+  document.getElementById('ventaInput').value = '';
+  document.getElementById('obsInput').value = '';
+  ventas = await dbGet('baros_ventas', 'order=fecha.desc&limit=30');
+  renderCierreScreen();
+  alert('✅ Cierre guardado');
+}
+
+// =============================================
+// ADMIN
+// =============================================
+function renderAdminContent() {
+  renderHistorial(); renderEmpleadosAdmin(); renderTareasAdmin(); renderVentasAdmin(); renderAsignarSelect();
+  document.getElementById('valorHoraDisplay').textContent = '$' + valorHora.toLocaleString('es-CO') + ' / hora';
+}
+
+function renderHistorial() {
+  const el = document.getElementById('historialList');
+  const cerrados = turnos.filter(t => !t.activo);
+  if (!cerrados.length) { el.innerHTML = '<div class="text-muted" style="font-size:12px">Sin turnos registrados aún.</div>'; return; }
+  el.innerHTML = cerrados.map(t => {
+    const emp = employees.find(e => e.id === t.empleado_id);
+    return '<div class="historial-item"><div class="historial-top">' +
+      '<div class="historial-name">' + (emp ? emp.nombre : 'Empleado') + '</div>' +
+      '<div class="historial-valor">$' + (t.valor_pagar||0).toLocaleString('es-CO') + '</div></div>' +
+      '<div class="historial-meta">' + formatDate(t.inicio) + ' · ' + (t.horas||0) + 'h</div>' +
+      '<div class="mt-8">' + (t.pagado ? '<span class="paid-badge">✓ Pagado</span>' : '<span class="unpaid-badge" onclick="marcarPagado(' + t.id + ')">Marcar pagado</span>') + '</div></div>';
+  }).join('');
+}
+
+async function marcarPagado(id) {
+  await dbPatch('baros_turnos', 'id=eq.' + id, {pagado: true});
+  const t = turnos.find(x => x.id === id);
+  if (t) t.pagado = true;
+  renderHistorial();
+}
+
+function renderEmpleadosAdmin() {
+  const el = document.getElementById('empleadosList');
+  el.innerHTML = employees.map(e =>
+    '<div class="admin-row"><div class="admin-row-label">' + e.nombre + '</div>' +
+    '<button class="btn btn-secondary btn-sm" style="color:var(--danger);border-color:var(--danger)" onclick="deleteEmpleado(' + e.id + ')">Eliminar</button></div>'
+  ).join('');
+}
+
+async function addEmpleado() {
+  const nombre = document.getElementById('newEmpName').value.trim();
+  if (!nombre) return;
+  const res = await dbPost('baros_empleados', {nombre});
+  if (res && res[0]) employees.push(res[0]);
+  document.getElementById('newEmpName').value = '';
+  closeModal('modalAddEmpleado');
+  renderEmpleadosAdmin(); renderTurnoScreen(); renderAsignarSelect();
+}
+
+async function deleteEmpleado(id) {
+  if (!confirm('¿Eliminar este empleado?')) return;
+  await dbDelete('baros_empleados', 'id=eq.' + id);
+  employees = employees.filter(e => e.id !== id);
+  renderEmpleadosAdmin(); renderTurnoScreen();
+}
+
+function renderTareasAdmin() {
+  const el = document.getElementById('adminTareasList');
+  const lista = tareas.filter(t => t.tipo !== 'asignada');
+  if (!lista.length) { el.innerHTML = '<div class="text-muted" style="font-size:12px">Sin tareas.</div>'; return; }
+  el.innerHTML = lista.map(t =>
+    '<div class="admin-row"><div><div class="admin-row-label">' + t.descripcion + '</div>' +
+    '<div class="admin-row-sub">' + tipoLabel(t.tipo) + (t.frecuencia_dias ? ' · cada ' + t.frecuencia_dias + ' días' : '') + '</div></div>' +
+    '<button class="btn btn-secondary btn-sm" style="color:var(--danger);border-color:var(--danger)" onclick="deleteTarea(' + t.id + ')">✕</button></div>'
+  ).join('');
+}
+
+async function addTarea() {
+  const desc = document.getElementById('newTareaDesc').value.trim();
+  const tipo = document.getElementById('newTareaTipo').value;
+  const mins = document.getElementById('newTareaMins').value;
+  const pasos = document.getElementById('newTareaPasos').value.trim();
+  const freq = document.getElementById('newTareaFreq').value;
+  if (!desc) return;
+  const data = {descripcion: desc, tipo, minutos: mins ? parseInt(mins) : null, pasos: pasos || null};
+  if (tipo === 'recurrente') data.frecuencia_dias = parseInt(freq) || 7;
+  const res = await dbPost('baros_tareas', data);
+  if (res && res[0]) tareas.push(res[0]);
+  closeModal('modalAddTarea');
+  document.getElementById('newTareaDesc').value = '';
+  document.getElementById('newTareaMins').value = '';
+  document.getElementById('newTareaPasos').value = '';
+  renderTareasAdmin();
+}
+
+async function deleteTarea(id) {
+  if (!confirm('¿Eliminar esta tarea?')) return;
+  await dbDelete('baros_tareas', 'id=eq.' + id);
+  tareas = tareas.filter(t => t.id !== id);
+  renderTareasAdmin(); renderTareasScreen();
+}
+
+async function saveValorHora() {
+  const val = document.getElementById('newValorHora').value;
+  if (!val) return;
+  valorHora = parseFloat(val);
+  await dbPatch('baros_config', 'key=eq.valor_hora', {value: String(valorHora)});
+  closeModal('modalValorHora');
+  document.getElementById('valorHoraDisplay').textContent = '$' + valorHora.toLocaleString('es-CO') + ' / hora';
+}
+
+function renderAsignarSelect() {
+  document.getElementById('asignarEmpleado').innerHTML = employees.map(e => '<option value="' + e.id + '">' + e.nombre + '</option>').join('');
+}
+
+async function asignarTarea() {
+  const empId = document.getElementById('asignarEmpleado').value;
+  const desc = document.getElementById('asignarDesc').value.trim();
+  const mins = document.getElementById('asignarMins').value;
+  const pasos = document.getElementById('asignarPasos').value.trim();
+  if (!desc) { alert('Escribe la descripción'); return; }
+  const res = await dbPost('baros_tareas', {descripcion: desc, tipo: 'asignada', empleado_id: parseInt(empId), fecha_asignada: todayStr(), minutos: mins ? parseInt(mins) : null, pasos: pasos || null});
+  if (res && res[0]) tareas.push(res[0]);
+  document.getElementById('asignarDesc').value = '';
+  document.getElementById('asignarMins').value = '';
+  document.getElementById('asignarPasos').value = '';
+  alert('✅ Tarea asignada');
+  renderTareasScreen();
+}
+
+function renderVentasAdmin() {
+  const el = document.getElementById('adminVentasList');
+  if (!ventas.length) { el.innerHTML = '<div class="text-muted" style="font-size:12px">Sin ventas registradas.</div>'; return; }
+  el.innerHTML = ventas.slice(0,10).map(v =>
+    '<div class="admin-row"><div><div class="admin-row-label">$' + parseInt(v.venta).toLocaleString('es-CO') + '</div>' +
+    '<div class="admin-row-sub">' + formatDate(v.fecha) + (v.observaciones ? ' · ' + v.observaciones.slice(0,40) : '') + '</div></div></div>'
+  ).join('');
+}
+
+// =============================================
+// MODALS
+// =============================================
+function openModal(id) { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+document.querySelectorAll('.modal-overlay').forEach(m => {
+  m.addEventListener('click', e => { if (e.target === m) m.classList.remove('open'); });
+});
+
+// =============================================
+// UTILS
+// =============================================
+function todayStr() {
+  const d = new Date();
+  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+}
+function formatTime(d) { return d.toLocaleTimeString('es-CO', {hour:'2-digit', minute:'2-digit'}); }
+function formatDuration(ms) {
+  const h = Math.floor(ms/3600000), m = Math.floor((ms%3600000)/60000), s = Math.floor((ms%60000)/1000);
+  return String(h).padStart(2,'0') + ':' + String(m).padStart(2,'0') + ':' + String(s).padStart(2,'0');
+}
+function formatDate(iso) {
+  if (!iso) return '';
+  return new Date(iso).toLocaleDateString('es-CO', {day:'2-digit', month:'short', year:'numeric'});
+}
+function tipoLabel(t) { return {apertura:'Apertura',cierre:'Cierre',recurrente:'Periódica',asignada:'Asignada'}[t] || t; }
+
+init();
+</script>
+</body>
+</html>
