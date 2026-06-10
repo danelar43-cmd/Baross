@@ -1,0 +1,1045 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>BAROS</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Fraunces:ital,wght@0,300;0,600;1,300&display=swap');
+  :root{--bg:#0e0e0e;--surface:#181818;--surface2:#222222;--border:#2e2e2e;--accent:#c8f060;--accent2:#f0a840;--danger:#f06060;--text:#f0ede8;--muted:#888;--radius:12px;}
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+  body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--text);min-height:100vh;max-width:480px;margin:0 auto;padding-bottom:80px;}
+  .app-header{padding:20px 20px 12px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:var(--bg);z-index:100;}
+  .app-logo{font-family:'Fraunces',serif;font-size:28px;font-weight:600;letter-spacing:-1px;color:var(--accent);}
+  .header-right{display:flex;align-items:center;gap:10px;}
+  .admin-badge{font-size:10px;background:var(--accent);color:#0e0e0e;padding:3px 8px;border-radius:20px;font-weight:500;display:none;}
+  .admin-badge.visible{display:block;}
+  .btn-icon{background:var(--surface);border:1px solid var(--border);color:var(--text);width:36px;height:36px;border-radius:8px;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+  .bottom-nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;background:var(--surface);border-top:1px solid var(--border);display:flex;z-index:100;}
+  .nav-item{flex:1;padding:10px 4px 12px;display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;border:none;background:none;color:var(--muted);font-family:'DM Mono',monospace;font-size:9px;transition:color 0.2s;position:relative;}
+  .nav-item .icon{font-size:20px;}
+  .nav-item.active{color:var(--accent);}
+  .screen{display:none;padding:16px;}
+  .screen.active{display:block;}
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:12px;}
+  .card-title{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:12px;}
+  .card-title-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;}
+  .card-title-row .card-title{margin-bottom:0;}
+  .btn{width:100%;padding:14px;border-radius:var(--radius);border:none;font-family:'DM Mono',monospace;font-size:13px;font-weight:500;cursor:pointer;transition:opacity 0.2s,transform 0.1s;}
+  .btn:active{transform:scale(0.98);opacity:0.85;}
+  .btn-primary{background:var(--accent);color:#0e0e0e;}
+  .btn-danger{background:var(--danger);color:white;}
+  .btn-secondary{background:var(--surface2);color:var(--text);border:1px solid var(--border);}
+  .btn-sm{padding:6px 11px;font-size:11px;width:auto;border-radius:8px;}
+  .btn-ghost{background:none;border:none;color:var(--muted);font-size:11px;cursor:pointer;padding:4px 6px;font-family:'DM Mono',monospace;}
+  .employee-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+  .emp-card{background:var(--surface2);border:2px solid var(--border);border-radius:var(--radius);padding:14px 10px;text-align:center;cursor:pointer;transition:all 0.2s;}
+  .emp-card:active{transform:scale(0.97);}
+  .emp-card.active-shift{border-color:var(--accent);background:#1a2410;}
+  .emp-card .emp-name{font-size:13px;font-weight:500;}
+  .emp-card .emp-status{font-size:10px;color:var(--muted);margin-top:4px;}
+  .emp-card.active-shift .emp-status{color:var(--accent);}
+  .turno-timer{font-family:'Fraunces',serif;font-size:42px;font-weight:300;color:var(--accent);letter-spacing:-2px;text-align:center;padding:12px 0;}
+  .turno-name{text-align:center;font-size:14px;color:var(--muted);margin-bottom:16px;}
+  .task-section-header{display:flex;align-items:center;gap:8px;padding:10px 0 6px;border-bottom:1px solid var(--border);margin-bottom:4px;}
+  .task-section-title{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;flex:1;}
+  .task-count{font-size:10px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:2px 7px;color:var(--muted);}
+  .task-count.has-pending{background:#1e2a10;border-color:var(--accent);color:var(--accent);}
+  .task-item{display:flex;align-items:flex-start;gap:10px;padding:10px 0;border-bottom:1px solid #1a1a1a;}
+  .task-item:last-child{border-bottom:none;}
+  .task-check{width:22px;height:22px;min-width:22px;border:2px solid var(--border);border-radius:6px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:11px;transition:all 0.2s;background:var(--surface2);margin-top:1px;}
+  .task-check.done{background:var(--accent);border-color:var(--accent);color:#0e0e0e;font-weight:bold;}
+  .task-body{flex:1;}
+  .task-name{font-size:13px;line-height:1.4;}
+  .task-name.done{text-decoration:line-through;color:var(--muted);}
+  .task-meta-row{font-size:10px;color:var(--muted);margin-top:3px;display:flex;flex-wrap:wrap;gap:6px;align-items:center;}
+  .task-freq-badge{font-size:9px;padding:2px 6px;border-radius:8px;background:var(--surface2);border:1px solid var(--border);color:var(--muted);}
+  .task-pasos-link{font-size:10px;color:var(--accent);cursor:pointer;}
+  .input-field{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:11px 12px;color:var(--text);font-family:'DM Mono',monospace;font-size:13px;margin-bottom:10px;}
+  .input-field:focus{outline:none;border-color:var(--accent);}
+  textarea.input-field{resize:vertical;min-height:70px;}
+  select.input-field{appearance:none;}
+  .field-label{font-size:11px;color:var(--muted);display:block;margin-bottom:5px;}
+  .pin-screen{display:flex;flex-direction:column;align-items:center;padding:32px 24px;}
+  .pin-title{font-family:'Fraunces',serif;font-size:24px;font-weight:300;margin-bottom:4px;}
+  .pin-dots{display:flex;gap:12px;margin:20px 0;}
+  .pin-dot{width:14px;height:14px;border-radius:50%;border:2px solid var(--border);transition:all 0.2s;}
+  .pin-dot.filled{background:var(--accent);border-color:var(--accent);}
+  .pin-pad{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;width:100%;max-width:260px;}
+  .pin-key{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;font-family:'Fraunces',serif;font-size:22px;font-weight:300;color:var(--text);cursor:pointer;text-align:center;transition:all 0.15s;}
+  .pin-key:active{background:var(--surface2);transform:scale(0.95);}
+  .pin-error{color:var(--danger);font-size:12px;margin-top:10px;}
+  .admin-row{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid #1a1a1a;gap:8px;}
+  .admin-row:last-child{border-bottom:none;}
+  .admin-row-main{flex:1;}
+  .admin-row-label{font-size:13px;line-height:1.3;}
+  .admin-row-sub{font-size:11px;color:var(--muted);margin-top:2px;}
+  .admin-actions{display:flex;gap:4px;}
+  .historial-item{padding:12px 0;border-bottom:1px solid var(--border);}
+  .historial-item:last-child{border-bottom:none;}
+  .historial-top{display:flex;justify-content:space-between;align-items:flex-start;}
+  .historial-name{font-size:14px;font-weight:500;}
+  .historial-valor{font-size:13px;color:var(--accent);}
+  .historial-meta{font-size:11px;color:var(--muted);margin-top:3px;}
+  .historial-actions{display:flex;gap:6px;margin-top:8px;align-items:center;flex-wrap:wrap;}
+  .paid-badge{font-size:9px;padding:3px 8px;border-radius:10px;background:#1e2a10;color:var(--accent);border:1px solid var(--accent);}
+  .unpaid-badge{font-size:9px;padding:3px 8px;border-radius:10px;background:#2a1010;color:var(--danger);border:1px solid var(--danger);cursor:pointer;}
+  .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.8);z-index:200;align-items:flex-end;justify-content:center;}
+  .modal-overlay.open{display:flex;}
+  .modal{background:var(--surface);border-radius:20px 20px 0 0;padding:24px 20px 40px;width:100%;max-width:480px;max-height:88vh;overflow-y:auto;}
+  .modal-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;}
+  .modal-title{font-family:'Fraunces',serif;font-size:20px;font-weight:300;}
+  .modal-close{background:none;border:none;color:var(--muted);font-size:22px;cursor:pointer;padding:0;line-height:1;}
+  .receta-cat-header{font-size:10px;color:var(--accent);text-transform:uppercase;letter-spacing:1.5px;padding:14px 0 8px;}
+  .receta-item{display:flex;justify-content:space-between;align-items:center;padding:11px 0;border-bottom:1px solid #1a1a1a;cursor:pointer;}
+  .receta-item:last-child{border-bottom:none;}
+  .receta-name{font-size:13px;}
+  .receta-arrow{color:var(--muted);font-size:12px;}
+  .search-bar{width:100%;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:11px 14px;color:var(--text);font-family:'DM Mono',monospace;font-size:13px;margin-bottom:4px;}
+  .search-bar:focus{outline:none;border-color:var(--accent);}
+  .venta-row{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid #1a1a1a;}
+  .venta-row:last-child{border-bottom:none;}
+  /* STOCK */
+  .stock-cat-header{font-size:10px;color:var(--accent);text-transform:uppercase;letter-spacing:1.5px;padding:14px 0 8px;}
+  .stock-item{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid #1a1a1a;}
+  .stock-item:last-child{border-bottom:none;}
+  .stock-check{width:20px;height:20px;min-width:20px;border:2px solid var(--border);border-radius:5px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:10px;background:var(--surface2);transition:all 0.2s;}
+  .stock-check.falta{background:#2a1010;border-color:var(--danger);color:var(--danger);}
+  .stock-name{font-size:13px;flex:1;}
+  .stock-name.falta{color:var(--danger);}
+  .stock-alert-banner{background:#1a0a0a;border:1px solid var(--danger);border-radius:10px;padding:12px;margin-bottom:12px;display:none;}
+  .stock-alert-title{font-size:11px;color:var(--danger);margin-bottom:6px;text-transform:uppercase;letter-spacing:1px;}
+  .stock-alert-item{font-size:12px;color:var(--text);padding:2px 0;}
+  .divider{height:1px;background:var(--border);margin:20px 0;}
+  .text-muted{color:var(--muted);font-size:12px;}
+  .text-accent{color:var(--accent);}
+  .text-danger{color:var(--danger);}
+  .mt-8{margin-top:8px;}
+  .mt-12{margin-top:12px;}
+  .flex-between{display:flex;justify-content:space-between;align-items:center;}
+  .empty-state{text-align:center;padding:28px 16px;color:var(--muted);font-size:13px;}
+  .empty-icon{font-size:28px;margin-bottom:8px;}
+  .two-col{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+</style>
+</head>
+<body>
+
+<div class="app-header">
+  <div class="app-logo">BAROS</div>
+  <div class="header-right">
+    <span class="admin-badge" id="adminBadge">ADMIN</span>
+    <button class="btn-icon" onclick="showScreen('admin')">⚙</button>
+  </div>
+</div>
+
+<nav class="bottom-nav">
+  <button class="nav-item active" onclick="showScreen('turno')" id="nav-turno"><span class="icon">⏱</span><span>Turno</span></button>
+  <button class="nav-item" onclick="showScreen('tareas')" id="nav-tareas"><span class="icon">✓</span><span>Tareas</span></button>
+  <button class="nav-item" onclick="showScreen('recetas')" id="nav-recetas"><span class="icon">🍹</span><span>Recetas</span></button>
+  <button class="nav-item" onclick="showScreen('stock')" id="nav-stock"><span class="icon">📦</span><span>Stock</span></button>
+  <button class="nav-item" onclick="showScreen('admin')" id="nav-admin"><span class="icon">🔐</span><span>Admin</span></button>
+</nav>
+
+<!-- TURNO -->
+<div class="screen active" id="screen-turno">
+  <div id="turnoSelectView">
+    <div class="card">
+      <div class="card-title">¿Quién está trabajando?</div>
+      <div class="employee-grid" id="employeeGrid"></div>
+    </div>
+  </div>
+  <div id="turnoActiveView" style="display:none">
+    <div class="card">
+      <div class="turno-name" id="turnoName"></div>
+      <div class="turno-timer" id="timerDisplay">00:00:00</div>
+      <button class="btn btn-danger" onclick="endShift()">Terminar turno</button>
+    </div>
+    <div class="card">
+      <div class="card-title">Apertura pendiente</div>
+      <div id="turnoTareasList"></div>
+    </div>
+  </div>
+</div>
+
+<!-- TAREAS -->
+<div class="screen" id="screen-tareas">
+  <div id="tareasSinTurno" class="empty-state" style="display:none">
+    <div class="empty-icon">⏱</div>Inicia tu turno para ver las tareas del día.
+  </div>
+  <div id="tareasContent" style="display:none">
+    <div class="card">
+      <div class="task-section-header"><div class="task-section-title">🌅 Apertura</div><span class="task-count" id="countApertura">—</span></div>
+      <div id="listApertura"></div>
+      <div class="task-section-header" style="margin-top:12px"><div class="task-section-title">🔄 Periódicas</div><span class="task-count" id="countRecurrente">—</span></div>
+      <div id="listRecurrente"></div>
+      <div class="task-section-header" style="margin-top:12px"><div class="task-section-title">📌 Asignadas hoy</div><span class="task-count" id="countAsignada">—</span></div>
+      <div id="listAsignada"></div>
+      <div class="task-section-header" style="margin-top:12px"><div class="task-section-title">🌙 Cierre</div><span class="task-count" id="countCierre">—</span></div>
+      <div id="listCierre"></div>
+    </div>
+  </div>
+</div>
+
+<!-- RECETAS -->
+<div class="screen" id="screen-recetas">
+  <input type="text" class="search-bar" placeholder="🔍  Buscar receta..." oninput="filterRecetas(this.value)">
+  <div id="recetasContainer"></div>
+</div>
+
+<!-- STOCK -->
+<div class="screen" id="screen-stock">
+  <div class="stock-alert-banner" id="stockAlertBanner">
+    <div class="stock-alert-title">⚠ Falta reponer</div>
+    <div id="stockAlertList"></div>
+  </div>
+  <div class="card" style="margin-bottom:8px">
+    <div class="text-muted" style="font-size:12px;line-height:1.6">Marca lo que está por agotarse o falta. El admin verá las alertas.</div>
+  </div>
+  <div id="stockContainer"></div>
+</div>
+
+<!-- CIERRE — movido a dentro de admin, pero mantenemos pantalla para empleados -->
+<div class="screen" id="screen-cierre" style="display:none"></div>
+
+<!-- ADMIN -->
+<div class="screen" id="screen-admin">
+  <div id="adminLocked">
+    <div class="pin-screen">
+      <div class="pin-title">Panel Admin</div>
+      <div class="text-muted">Ingresa tu PIN</div>
+      <div class="pin-dots" id="pinDots">
+        <div class="pin-dot" id="d0"></div><div class="pin-dot" id="d1"></div>
+        <div class="pin-dot" id="d2"></div><div class="pin-dot" id="d3"></div>
+      </div>
+      <div class="pin-pad">
+        <button class="pin-key" onclick="pinKey('1')">1</button><button class="pin-key" onclick="pinKey('2')">2</button><button class="pin-key" onclick="pinKey('3')">3</button>
+        <button class="pin-key" onclick="pinKey('4')">4</button><button class="pin-key" onclick="pinKey('5')">5</button><button class="pin-key" onclick="pinKey('6')">6</button>
+        <button class="pin-key" onclick="pinKey('7')">7</button><button class="pin-key" onclick="pinKey('8')">8</button><button class="pin-key" onclick="pinKey('9')">9</button>
+        <button class="pin-key" onclick="pinKey('del')" style="font-size:16px">⌫</button><button class="pin-key" onclick="pinKey('0')">0</button>
+        <button class="pin-key" onclick="pinKey('ok')" style="font-size:13px;color:var(--accent)">OK</button>
+      </div>
+      <div class="pin-error" id="pinError"></div>
+    </div>
+  </div>
+  <div id="adminUnlocked" style="display:none">
+    <!-- 1. VENTA DEL DÍA -->
+    <div class="card">
+      <div class="card-title">📋 Venta del día</div>
+      <label class="field-label">Valor total ($COP)</label>
+      <input type="number" class="input-field" id="ventaInput" placeholder="0">
+      <label class="field-label">Observaciones</label>
+      <textarea class="input-field" id="obsInput" placeholder="¿Algo que reportar?"></textarea>
+      <button class="btn btn-primary" onclick="saveVenta()">Guardar cierre</button>
+    </div>
+    <!-- 2. ASIGNAR TAREA -->
+    <div class="card">
+      <div class="card-title">📌 Asignar tarea para hoy</div>
+      <label class="field-label">Empleado</label>
+      <select class="input-field" id="asignarEmpleado"></select>
+      <label class="field-label">Descripción</label>
+      <input type="text" class="input-field" id="asignarDesc" placeholder="Ej: Limpiar nevera">
+      <div class="two-col">
+        <div><label class="field-label">Minutos aprox.</label><input type="number" class="input-field" id="asignarMins" placeholder="30"></div>
+        <div style="display:flex;align-items:flex-end"><button class="btn btn-primary" onclick="asignarTarea()" style="margin-bottom:10px">Asignar</button></div>
+      </div>
+      <label class="field-label">Pasos (opcional)</label>
+      <textarea class="input-field" id="asignarPasos" placeholder="Paso 1..."></textarea>
+    </div>
+    <!-- 3. STOCK ALERTAS -->
+    <div class="card" id="adminStockAlertCard" style="display:none">
+      <div class="card-title">⚠ Alertas de stock</div>
+      <div id="adminStockAlertList"></div>
+    </div>
+    <!-- 4. TURNOS -->
+    <div class="card">
+      <div class="card-title-row">
+        <div class="card-title">⏱ Turnos</div>
+        <button class="btn btn-secondary btn-sm" onclick="openAddTurnoModal()">+ Manual</button>
+      </div>
+      <div id="historialList"></div>
+    </div>
+    <!-- 5. VENTAS -->
+    <div class="card">
+      <div class="card-title">💵 Ventas registradas</div>
+      <div id="adminVentasList"></div>
+    </div>
+    <!-- 6. TAREAS -->
+    <div class="card">
+      <div class="card-title-row">
+        <div class="card-title">✓ Tareas</div>
+        <button class="btn btn-secondary btn-sm" onclick="openModal('modalAddTarea')">+ Nueva</button>
+      </div>
+      <div id="adminTareasList"></div>
+    </div>
+    <!-- 7. RECETAS -->
+    <div class="card">
+      <div class="card-title-row">
+        <div class="card-title">🍹 Recetas</div>
+        <button class="btn btn-secondary btn-sm" onclick="openAddRecetaModal()">+ Nueva</button>
+      </div>
+      <div id="adminRecetasList"></div>
+    </div>
+    <!-- 8. STOCK ADMIN -->
+    <div class="card">
+      <div class="card-title-row">
+        <div class="card-title">📦 Stock</div>
+        <button class="btn btn-secondary btn-sm" onclick="openModal('modalAddStock')">+ Item</button>
+      </div>
+      <div id="adminStockList"></div>
+    </div>
+    <!-- 9. EMPLEADOS -->
+    <div class="card">
+      <div class="card-title-row">
+        <div class="card-title">👥 Empleados</div>
+        <button class="btn btn-secondary btn-sm" onclick="openModal('modalAddEmpleado')">+ Añadir</button>
+      </div>
+      <div id="empleadosList"></div>
+    </div>
+    <!-- 10. CONFIG -->
+    <div class="card">
+      <div class="card-title">⚙ Configuración</div>
+      <div class="admin-row">
+        <div class="admin-row-main"><div class="admin-row-label" id="valorHoraDisplay">$8.500 / hora</div><div class="admin-row-sub">Valor base para liquidación</div></div>
+        <button class="btn btn-secondary btn-sm" onclick="openModal('modalValorHora')">Editar</button>
+      </div>
+    </div>
+    <button class="btn btn-secondary mt-8" onclick="lockAdmin()">Cerrar sesión admin</button>
+  </div>
+</div>
+
+<!-- MODALS -->
+<div class="modal-overlay" id="modalEndShift">
+  <div class="modal">
+    <div class="modal-header"><div class="modal-title">Terminar turno</div><button class="modal-close" onclick="closeModal('modalEndShift')">✕</button></div>
+    <div id="endShiftSummary" style="font-size:13px;line-height:1.8;color:var(--muted)"></div>
+    <div class="divider"></div>
+    <button class="btn btn-danger" onclick="confirmEndShift()">Sí, terminar turno</button>
+    <button class="btn btn-secondary mt-8" onclick="closeModal('modalEndShift')">Cancelar</button>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modalEditTurno">
+  <div class="modal">
+    <div class="modal-header"><div class="modal-title">Editar turno</div><button class="modal-close" onclick="closeModal('modalEditTurno')">✕</button></div>
+    <input type="hidden" id="editTurnoId">
+    <label class="field-label">Empleado</label><select class="input-field" id="editTurnoEmp"></select>
+    <label class="field-label">Hora de entrada</label><input type="datetime-local" class="input-field" id="editTurnoInicio">
+    <label class="field-label">Hora de salida</label><input type="datetime-local" class="input-field" id="editTurnoFin">
+    <label class="field-label">¿Pagado?</label>
+    <select class="input-field" id="editTurnoPagado"><option value="false">No pagado</option><option value="true">Pagado</option></select>
+    <button class="btn btn-primary mt-8" onclick="saveEditTurno()">Guardar cambios</button>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modalAddTurno">
+  <div class="modal">
+    <div class="modal-header"><div class="modal-title">Turno manual</div><button class="modal-close" onclick="closeModal('modalAddTurno')">✕</button></div>
+    <label class="field-label">Empleado</label><select class="input-field" id="manualTurnoEmp"></select>
+    <label class="field-label">Hora de entrada</label><input type="datetime-local" class="input-field" id="manualTurnoInicio">
+    <label class="field-label">Hora de salida</label><input type="datetime-local" class="input-field" id="manualTurnoFin">
+    <button class="btn btn-primary mt-8" onclick="saveManualTurno()">Registrar turno</button>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modalAddEmpleado">
+  <div class="modal">
+    <div class="modal-header"><div class="modal-title">Nuevo empleado</div><button class="modal-close" onclick="closeModal('modalAddEmpleado')">✕</button></div>
+    <label class="field-label">Nombre</label><input type="text" class="input-field" id="newEmpName" placeholder="Nombre completo">
+    <button class="btn btn-primary mt-8" onclick="addEmpleado()">Guardar</button>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modalValorHora">
+  <div class="modal">
+    <div class="modal-header"><div class="modal-title">Valor por hora</div><button class="modal-close" onclick="closeModal('modalValorHora')">✕</button></div>
+    <label class="field-label">$ COP por hora</label><input type="number" class="input-field" id="newValorHora" placeholder="8500">
+    <button class="btn btn-primary mt-8" onclick="saveValorHora()">Guardar</button>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modalAddTarea">
+  <div class="modal">
+    <div class="modal-header"><div class="modal-title" id="modalTareaTitle">Nueva tarea</div><button class="modal-close" onclick="closeModal('modalAddTarea')">✕</button></div>
+    <input type="hidden" id="editTareaId">
+    <label class="field-label">Descripción</label><input type="text" class="input-field" id="newTareaDesc" placeholder="Ej: Limpiar estufa">
+    <label class="field-label">Tipo</label>
+    <select class="input-field" id="newTareaTipo" onchange="document.getElementById('frecuenciaField').style.display=this.value==='recurrente'?'block':'none'">
+      <option value="apertura">Apertura (diaria)</option>
+      <option value="cierre">Cierre (diaria)</option>
+      <option value="recurrente">Periódica (cada X días)</option>
+    </select>
+    <div id="frecuenciaField" style="display:none">
+      <label class="field-label">Cada cuántos días</label><input type="number" class="input-field" id="newTareaFreq" value="7">
+    </div>
+    <label class="field-label">Minutos aprox.</label><input type="number" class="input-field" id="newTareaMins" placeholder="15">
+    <label class="field-label">Pasos / instrucciones (opcional)</label><textarea class="input-field" id="newTareaPasos" placeholder="Paso 1..."></textarea>
+    <button class="btn btn-primary mt-8" onclick="saveTarea()">Guardar tarea</button>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modalTaskDetail">
+  <div class="modal">
+    <div class="modal-header"><div class="modal-title" id="detailTaskName"></div><button class="modal-close" onclick="closeModal('modalTaskDetail')">✕</button></div>
+    <div class="text-muted" id="detailTaskMins" style="margin-bottom:12px"></div>
+    <div id="detailTaskPasos" style="white-space:pre-wrap;font-size:13px;line-height:1.8;color:var(--text)"></div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modalReceta">
+  <div class="modal">
+    <div class="modal-header"><div class="modal-title" id="modalRecetaNombre"></div><button class="modal-close" onclick="closeModal('modalReceta')">✕</button></div>
+    <div style="font-size:10px;color:var(--accent);letter-spacing:1px;text-transform:uppercase;margin-bottom:14px" id="modalRecetaCat"></div>
+    <div id="modalRecetaBody" style="font-size:13px;line-height:1.9;color:var(--text);white-space:pre-wrap"></div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modalEditReceta">
+  <div class="modal">
+    <div class="modal-header"><div class="modal-title" id="editRecetaTitle">Editar receta</div><button class="modal-close" onclick="closeModal('modalEditReceta')">✕</button></div>
+    <input type="hidden" id="editRecetaIdx">
+    <label class="field-label">Nombre</label><input type="text" class="input-field" id="editRecetaNombre" placeholder="Nombre de la receta">
+    <label class="field-label">Categoría</label>
+    <select class="input-field" id="editRecetaCat">
+      <option>Cócteles</option><option>Mocktails</option><option>Limonadas</option>
+      <option>Bebidas Calientes</option><option>Bebidas Frías</option><option>Pa' picar</option><option>Hamburguesas</option>
+    </select>
+    <label class="field-label">Preparación / pasos</label>
+    <textarea class="input-field" id="editRecetaPrep" style="min-height:150px" placeholder="Paso 1..."></textarea>
+    <button class="btn btn-primary mt-8" onclick="saveReceta()">Guardar receta</button>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modalAddStock">
+  <div class="modal">
+    <div class="modal-header"><div class="modal-title" id="modalStockTitle">Nuevo item</div><button class="modal-close" onclick="closeModal('modalAddStock')">✕</button></div>
+    <input type="hidden" id="editStockId">
+    <label class="field-label">Nombre</label><input type="text" class="input-field" id="newStockNombre" placeholder="Ej: Águila">
+    <label class="field-label">Categoría</label>
+    <select class="input-field" id="newStockCat">
+      <option>Cervezas</option><option>Licores</option><option>Bebidas y Mezclas</option>
+      <option>Café y Calientes</option><option>Cocina</option><option>Salsas</option><option>Operación</option>
+    </select>
+    <button class="btn btn-primary mt-8" onclick="saveStockItem()">Guardar</button>
+  </div>
+</div>
+
+<script>
+const SUPABASE_URL='https://uqwfzdabiutiljcrlohy.supabase.co';
+const SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVxd2Z6ZGFiaXV0aWxqY3Jsb2h5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAwMTMxNDYsImV4cCI6MjA5NTU4OTE0Nn0.3FaMPS137S5-zFNDEazbvqrwBDDPtcmEFgLcbzG8X8Y';
+const H={'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json'};
+const dbGet=(t,q='')=>fetch(`${SUPABASE_URL}/rest/v1/${t}?${q}`,{headers:H}).then(r=>r.json());
+const dbPost=(t,d)=>fetch(`${SUPABASE_URL}/rest/v1/${t}`,{method:'POST',headers:{...H,'Prefer':'return=representation'},body:JSON.stringify(d)}).then(r=>r.json());
+const dbPatch=(t,q,d)=>fetch(`${SUPABASE_URL}/rest/v1/${t}?${q}`,{method:'PATCH',headers:{...H,'Prefer':'return=minimal'},body:JSON.stringify(d)});
+const dbDelete=(t,q)=>fetch(`${SUPABASE_URL}/rest/v1/${t}?${q}`,{method:'DELETE',headers:H});
+
+// RECETAS (en memoria, editables por admin)
+let RECETAS=[
+  {cat:'Cócteles',nombre:'Mojito',prep:'1. Llenar coctelera de hielo\n2. Shot de ron blanco\n3. Shot de sirope\n4. Hojas de hierbabuena maceradas\n5. Medio limón\n6. Medio shot de triple sec verde\n7. Batir y servir con hielo\n8. Decorar con rodaja de limón y hierbabuena'},
+  {cat:'Cócteles',nombre:'Blue Margarita',prep:'1. Escarchar copa con azúcar\n2. Medio limón\n3. Shot de sirope\n4. Triple sec azul\n5. Shot de tequila\n6. Mezclar y servir'},
+  {cat:'Cócteles',nombre:'Coco Loco',prep:'1. Shot de ron\n2. Cucharada de leche en polvo\n3. Limonada de coco\n4. 7 hielos\n5. Agua que cubra los primeros hielos\n6. Decorar con coco rallado y cereza'},
+  {cat:'Cócteles',nombre:'Malibu Sunset',prep:'1. Escarchar copa con azúcar\n2. Shot de granadina\n3. 4 hielos moderados\n4. Shot de vodka o tequila\n5. Completar con jugo de naranja'},
+  {cat:'Cócteles',nombre:'Caipiriña',prep:'1. Macerar limón en el vaso\n2. 6 hielos medianos\n3. Shot de ron blanco\n4. Echar pedazos de limón\n5. Mezclar y servir'},
+  {cat:'Cócteles',nombre:'Sorpresa Tropical',prep:'1. Borde de granadina y azúcar\n2. Macerar limón con dulce de maracuyá\n3. 6 hielos medianos\n4. Shot de ron blanco\n5. Mezclar y servir'},
+  {cat:'Cócteles',nombre:'Daikiri',prep:'1. Coctelera: shot limón + shot ron blanco + shot sirope\n2. Servir en copa enfriada\n3. Rodaja de limón en el borde'},
+  {cat:'Cócteles',nombre:'Mi Patria Bandera',prep:'1. Granadina (rojo)\n2. Triple sec azul\n3. Jugo de naranja (amarillo)\n4. Servir en capas sin mezclar'},
+  {cat:'Cócteles',nombre:'Tsunami — Para compartir $48',prep:'1. Ron blanco\n2. Limón macerado\n3. Sirope simple\n4. Curaçao\n5. Servir en recipiente grande'},
+  {cat:'Mocktails',nombre:'Orion Azulito',prep:'1. 4 hielos\n2. Jugo de medio limón\n3. Medio macerado de limón\n4. Triple sec azul\n5. Soda\n6. Borde con triple sec azul y azúcar'},
+  {cat:'Mocktails',nombre:'Orion Sonrojado',prep:'1. 4 hielos\n2. Jugo de medio limón\n3. Medio macerado con frutos rojos\n4. Granadina\n5. Soda\n6. Borde con granadina y azúcar'},
+  {cat:'Mocktails',nombre:'Soda con Limón',prep:'1. Vaso con hielo\n2. Jugo de limón\n3. Soda\n4. Rodaja de limón'},
+  {cat:'Limonadas',nombre:'Limonada Natural',prep:'1. Macerar limón\n2. Mitad del vaso con hielos\n3. Pedazos de limón\n4. Agua o soda\n5. Rodaja decorativa'},
+  {cat:'Limonadas',nombre:'Limonada de Frutos Rojos',prep:'1. Macerar limón con dulce de frutos rojos\n2. Mitad del vaso con hielos\n3. Pedazos de limón\n4. Agua o soda\n5. Rodaja decorativa'},
+  {cat:'Limonadas',nombre:'Limonada de Hierbabuena',prep:'1. Macerar limón con hierbabuena\n2. Mitad del vaso con hielos\n3. Pedazos de limón\n4. Agua o soda\n5. Rodaja decorativa'},
+  {cat:'Bebidas Calientes',nombre:'Aromática Sencilla',prep:'Agua de aromática caliente con hierbabuena.\nSin agua: panela con hierbabuena.'},
+  {cat:'Bebidas Calientes',nombre:'Aromática de Frutas',prep:'1. 2 cucharadas frutos amarillos\n2. 1 cucharada frutos rojos\n3. Agua de aromática hasta llenar'},
+  {cat:'Bebidas Calientes',nombre:'Cappuccino',prep:'1. Tinto\n2. Leche con espuma\n3. Flor decorativa arriba'},
+  {cat:'Bebidas Calientes',nombre:'Mocaccino',prep:'1. Capa de chocolate en el fondo\n2. Tinto\n3. Leche con espuma\n4. Flor decorativa arriba'},
+  {cat:'Bebidas Calientes',nombre:'Vino Caliente',prep:'1. Escarchar copa con azúcar\n2. Calentar el vino\n3. Servir'},
+  {cat:'Bebidas Calientes',nombre:'Milo Caliente',prep:'1. Calentar leche\n2. Milo al gusto\n3. Mezclar y servir'},
+  {cat:'Bebidas Calientes',nombre:'Canelazo',prep:'1. Agua de panela (5 paquetes)\n2. 2-3 shots de aguardiente\n3. 3 rodajas de limón\n4. Borde con azúcar\n5. Servir caliente'},
+  {cat:'Bebidas Frías',nombre:'Batido de Frutas',prep:'1. 5 hielos\n2. Leche que tape los hielos\n3. Fruta\n4. Si es chocolate: Milo\n5. Vaso con arequipe y chocolate\n6. Licuar'},
+  {cat:'Bebidas Frías',nombre:'Milo Frío',prep:'1. 4-5 hielos\n2. Leche fría\n3. Milo al gusto\n4. Mezclar'},
+  {cat:"Pa' picar",nombre:'Salchipapa Sencilla',prep:'Personal $15 — Compartir $25\n\n1. Freír medio paquete de papas\n2. 2 salchichas americanas\n3. Salsas al gusto'},
+  {cat:"Pa' picar",nombre:'Salchipapa Especial',prep:'Personal $18 — Compartir $28\n\n1. Papas fritas\n2. 2 salchichas americanas\n3. 2 tocinetas\n4. 2 huevos de codorniz\n5. 2 tajadas de queso en tiras\n6. Salsas\nCompartir: duplicar todo'},
+  {cat:"Pa' picar",nombre:'Choripapa',prep:'Personal $18 — Compartir $28\n\n1. Papas fritas\n2. Chorizo parrillero\n3. Tocineta\n4. Queso gratinado\n5. Huevo de codorniz\n6. Salsas'},
+  {cat:"Pa' picar",nombre:'Mixto',prep:'Personal $18 — Compartir $28\n\n1. Papas fritas\n2. Salchicha + chorizo\n3. Tocineta\n4. Queso gratinado\n5. Huevo de codorniz\n6. Salsas'},
+  {cat:"Pa' picar",nombre:'Nachos de la Casa',prep:'$19\n\n1. Nachos\n2. Carne molida\n3. Pico de gallo (cebolla + tomate)\n4. Queso gratinado\n5. Guacamole'},
+  {cat:"Pa' picar",nombre:'Perro Sencillo',prep:'Personal $15 — Combo $25\n\n1. Pan artesanal\n2. Salchicha americana\n3. Tocineta\n4. Queso mozzarella\n5. Papa ripio arriba\n6. Salsas'},
+  {cat:"Pa' picar",nombre:'Perro Especial',prep:'Personal $20 — Combo $28\n\n1. Pan artesanal\n2. Salchicha americana\n3. Tocineta\n4. Guacamole\n5. Pico de gallo\n6. Queso mozzarella\n7. Huevos de codorniz\n8. Papa ripio\n9. Salsas'},
+  {cat:"Pa' picar",nombre:'Mini Arepas con Chorizo',prep:'$15\n\n1. Arepas de peto\n2. Chorizo parrillero\n3. Salsa de guacamole'},
+  {cat:'Hamburguesas',nombre:'Hamburguesa de Res',prep:'Personal $20 — Combo $28\n\n1. Calentar pan artesanal\n2. Cebolla caramelizada con salsa de carnes\n3. Lechuga\n4. 2 tomates + cebolla\n5. Carne res 150g con queso\n6. Tocineta'},
+  {cat:'Hamburguesas',nombre:'Hamburguesa de Cerdo',prep:'Personal $20 — Combo $28\n\n1. Calentar pan artesanal\n2. Cebolla caramelizada\n3. Lechuga\n4. 2 tomates + cebolla + piña asada\n5. Carne cerdo 150g con queso\n6. Tocineta'},
+  {cat:'Hamburguesas',nombre:'Hamburguesa Doble Carne',prep:'Personal $25 — Combo $32\n\n1. Pan artesanal\n2. Cebolla caramelizada\n3. Lechuga + 2 tomates + cebolla\n4. Carne 300g con queso\n5. Tocineta'},
+  {cat:'Hamburguesas',nombre:'Hamburguesa Mixta',prep:'Personal $25 — Combo $32\n\n1. Pan artesanal\n2. Cebolla caramelizada\n3. Lechuga + 2 tomates + cebolla\n4. Carne res 150g + cerdo 150g con queso\n5. Tocineta'},
+];
+
+const STOCK_SEED=[
+  {nombre:'Águila',categoria:'Cervezas',falta:false},{nombre:'Águila Light',categoria:'Cervezas',falta:false},
+  {nombre:'Coronita',categoria:'Cervezas',falta:false},{nombre:'Club Colombia Roja',categoria:'Cervezas',falta:false},
+  {nombre:'Club Colombia Dorada',categoria:'Cervezas',falta:false},{nombre:'Club Colombia Negra',categoria:'Cervezas',falta:false},
+  {nombre:'Club Colombia Trigo',categoria:'Cervezas',falta:false},{nombre:'Budweiser',categoria:'Cervezas',falta:false},
+  {nombre:'Heineken',categoria:'Cervezas',falta:false},{nombre:'Tres Cordilleras',categoria:'Cervezas',falta:false},
+  {nombre:'Stella Artois',categoria:'Cervezas',falta:false},{nombre:'Corona',categoria:'Cervezas',falta:false},
+  {nombre:"Redd's",categoria:'Cervezas',falta:false},{nombre:'Smirnoff Ice',categoria:'Cervezas',falta:false},
+  {nombre:'Antioqueño',categoria:'Licores',falta:false},{nombre:'Real Amarillo',categoria:'Licores',falta:false},
+  {nombre:'Amarillo Manzanares',categoria:'Licores',falta:false},{nombre:'Rosado del Tolima',categoria:'Licores',falta:false},
+  {nombre:'Viejo Caldas',categoria:'Licores',falta:false},{nombre:'Ron Medellín',categoria:'Licores',falta:false},
+  {nombre:'Ron blanco (cócteles)',categoria:'Licores',falta:false},{nombre:'Tequila Newton',categoria:'Licores',falta:false},
+  {nombre:'Vodka',categoria:'Licores',falta:false},{nombre:'Ginebra',categoria:'Licores',falta:false},
+  {nombre:'Triple sec verde',categoria:'Licores',falta:false},{nombre:'Triple sec azul',categoria:'Licores',falta:false},
+  {nombre:'Curaçao azul',categoria:'Licores',falta:false},{nombre:'Granadina',categoria:'Licores',falta:false},
+  {nombre:'Vino Gato Negro',categoria:'Licores',falta:false},
+  {nombre:'Soda',categoria:'Bebidas y Mezclas',falta:false},{nombre:'Ginger',categoria:'Bebidas y Mezclas',falta:false},
+  {nombre:'Jugo naranja El Valle',categoria:'Bebidas y Mezclas',falta:false},{nombre:'Limonada de coco',categoria:'Bebidas y Mezclas',falta:false},
+  {nombre:'RedBull',categoria:'Bebidas y Mezclas',falta:false},{nombre:'Gatorade',categoria:'Bebidas y Mezclas',falta:false},
+  {nombre:'Hidratao',categoria:'Bebidas y Mezclas',falta:false},{nombre:'Gaseosa 350ml',categoria:'Bebidas y Mezclas',falta:false},
+  {nombre:'Agua botella',categoria:'Bebidas y Mezclas',falta:false},{nombre:'Pulpas de fruta',categoria:'Bebidas y Mezclas',falta:false},
+  {nombre:'Sirope simple',categoria:'Bebidas y Mezclas',falta:false},
+  {nombre:'Café (máquina)',categoria:'Café y Calientes',falta:false},{nombre:'Leche caja',categoria:'Café y Calientes',falta:false},
+  {nombre:'Milo',categoria:'Café y Calientes',falta:false},{nombre:'Leche en polvo',categoria:'Café y Calientes',falta:false},
+  {nombre:'Panela',categoria:'Café y Calientes',falta:false},{nombre:'Hierbabuena',categoria:'Café y Calientes',falta:false},
+  {nombre:'Aromática frutas',categoria:'Café y Calientes',falta:false},{nombre:'Azúcar',categoria:'Café y Calientes',falta:false},
+  {nombre:'Papa precocida',categoria:'Cocina',falta:false},{nombre:'Salchicha americana',categoria:'Cocina',falta:false},
+  {nombre:'Chorizo parrillero',categoria:'Cocina',falta:false},{nombre:'Tocineta',categoria:'Cocina',falta:false},
+  {nombre:'Carne res',categoria:'Cocina',falta:false},{nombre:'Carne cerdo',categoria:'Cocina',falta:false},
+  {nombre:'Pan artesanal',categoria:'Cocina',falta:false},{nombre:'Queso',categoria:'Cocina',falta:false},
+  {nombre:'Huevo de codorniz',categoria:'Cocina',falta:false},{nombre:'Papa fosforito',categoria:'Cocina',falta:false},
+  {nombre:'Nachos',categoria:'Cocina',falta:false},{nombre:'Salsa guacamole',categoria:'Cocina',falta:false},
+  {nombre:'Lechuga',categoria:'Cocina',falta:false},{nombre:'Tomate',categoria:'Cocina',falta:false},
+  {nombre:'Cebolla',categoria:'Cocina',falta:false},{nombre:'Piña',categoria:'Cocina',falta:false},
+  {nombre:'Salsa rosada',categoria:'Salsas',falta:false},{nombre:'Salsa tomate',categoria:'Salsas',falta:false},
+  {nombre:'Hielo',categoria:'Operación',falta:false},{nombre:'Vasos',categoria:'Operación',falta:false},
+  {nombre:'Servilletas',categoria:'Operación',falta:false},{nombre:'Pitillos',categoria:'Operación',falta:false},
+];
+
+const TAREAS_SEED=[
+  {descripcion:'Baño: lavar, trapear y dejar limpio',tipo:'apertura',minutos:20,pasos:'1. Lavar baño completo\n2. Trapear el piso\n3. Dejar trapero limpio y escurrido'},
+  {descripcion:'Barrer y trapear escaleras',tipo:'apertura',minutos:10,pasos:null},
+  {descripcion:'Barrer salón (correr cada mesa) y trapear zona asignada',tipo:'apertura',minutos:20,pasos:'Correr cada mesa para barrer bien debajo. Trapear la zona asignada según el día.'},
+  {descripcion:'Sacar basura si es día de recolección',tipo:'apertura',minutos:5,pasos:'Siempre colocar bolsa nueva inmediatamente'},
+  {descripcion:'Abrir ventanas, conectar computador e iniciar sesión',tipo:'apertura',minutos:5,pasos:null},
+  {descripcion:'Revisar y preparar hielo',tipo:'apertura',minutos:10,pasos:'1. Sacar el hielo que haya\n2. Hacer más hielo'},
+  {descripcion:'Poner a hervir agua',tipo:'apertura',minutos:5,pasos:null},
+  {descripcion:'Revisar stock de cerveza',tipo:'apertura',minutos:10,pasos:'Viernes y sábados: bastante Águila y Coronita.'},
+  {descripcion:'Revisar stock general y reportar faltantes',tipo:'apertura',minutos:10,pasos:null},
+  {descripcion:'No quedar ningunas boronas — todas las mesas limpias',tipo:'cierre',minutos:10,pasos:null},
+  {descripcion:'Barrer y trapear barra y cocina',tipo:'cierre',minutos:15,pasos:null},
+  {descripcion:'Dejar trapero limpio',tipo:'cierre',minutos:5,pasos:null},
+  {descripcion:'Todos los trapos lavados y colgados',tipo:'cierre',minutos:10,pasos:'No mezclar trapos de cocina con los del baño'},
+  {descripcion:'Limpiar estufa completa y pared de atrás',tipo:'cierre',minutos:15,pasos:null},
+  {descripcion:'Lavar bandeja de la estufa',tipo:'cierre',minutos:5,pasos:null},
+  {descripcion:'Lavar plato del microondas y limpiar por dentro y fuera',tipo:'cierre',minutos:5,pasos:null},
+  {descripcion:'Descargar orinal y taza sin residuos',tipo:'cierre',minutos:5,pasos:null},
+  {descripcion:'Desocupar y enjuagar cafetera',tipo:'cierre',minutos:5,pasos:'No solo regar el agua — limpiar bien'},
+  {descripcion:'Escurridero de loza: vacío y de pie',tipo:'cierre',minutos:3,pasos:'Para evitar mal olor por agua reposada'},
+  {descripcion:'Toda la loza lavada, seca y organizada',tipo:'cierre',minutos:15,pasos:null},
+  {descripcion:'Cerrar el gas',tipo:'cierre',minutos:1,pasos:null},
+  {descripcion:'Bolsa de basura: amarrar y tapar la caneca',tipo:'cierre',minutos:3,pasos:null},
+  {descripcion:'Limpiar polvo y botellas de cócteles',tipo:'recurrente',frecuencia_dias:2,minutos:15,pasos:null},
+  {descripcion:'Rellenar Milo, azúcar, etc. y limpiar tarros',tipo:'recurrente',frecuencia_dias:3,minutos:10,pasos:null},
+  {descripcion:'Limpiar vitrina vasos: sacar todo, limpiar 3 niveles',tipo:'recurrente',frecuencia_dias:7,minutos:20,pasos:null},
+  {descripcion:'Limpiar cafetera externamente',tipo:'recurrente',frecuencia_dias:3,minutos:10,pasos:null},
+  {descripcion:'Limpieza profunda nevera: sacar todo, lavar bandejas',tipo:'recurrente',frecuencia_dias:7,minutos:30,pasos:'1. Sacar todo\n2. Lavar bandejas\n3. Limpiar interior\n4. Limpiar exterior'},
+  {descripcion:'Limpiar vidrios neveras de cerveza',tipo:'recurrente',frecuencia_dias:7,minutos:10,pasos:null},
+  {descripcion:'Organizar cerveza y revisar fechas',tipo:'recurrente',frecuencia_dias:7,minutos:10,pasos:null},
+  {descripcion:'Doblar y cortar servilletas',tipo:'recurrente',frecuencia_dias:3,minutos:10,pasos:null},
+  {descripcion:'Cambiar limones',tipo:'recurrente',frecuencia_dias:2,minutos:5,pasos:'Lavar antes de colocar'},
+  {descripcion:'Limpiar motores de las licuadoras',tipo:'recurrente',frecuencia_dias:14,minutos:15,pasos:null},
+  {descripcion:'Lavar parrillas de la estufa',tipo:'recurrente',frecuencia_dias:3,minutos:15,pasos:null},
+  {descripcion:'Limpieza profunda estufa completa',tipo:'recurrente',frecuencia_dias:4,minutos:30,pasos:'Parrillas, exterior, patas y parte de atrás — TODO'},
+  {descripcion:'Limpiar estante cocina: bajar todo y lavar',tipo:'recurrente',frecuencia_dias:7,minutos:25,pasos:null},
+  {descripcion:'Lavar canecas por dentro, fuera y tapa',tipo:'recurrente',frecuencia_dias:7,minutos:15,pasos:null},
+  {descripcion:'Restregar piso cocina con jabón, luego trapear',tipo:'recurrente',frecuencia_dias:7,minutos:20,pasos:'Escoba con fuerza para quitar la grasa. Agua y jabón líquido. Luego trapear bien.'},
+  {descripcion:'Lavar la olla a fondo',tipo:'recurrente',frecuencia_dias:7,minutos:20,pasos:'Al cambiar aceite, intentar quitar lo negro'},
+  {descripcion:'Limpiar cafetera por dentro',tipo:'recurrente',frecuencia_dias:15,minutos:20,pasos:null},
+  {descripcion:'Limpiar ventanas — parte de madera',tipo:'recurrente',frecuencia_dias:30,minutos:20,pasos:null},
+  {descripcion:'Limpiar entre baldosas escaleras a fondo',tipo:'recurrente',frecuencia_dias:30,minutos:30,pasos:'Restregar bien entre las baldosas'},
+  {descripcion:'Limpiar neveras cerveza por dentro y revisar fechas',tipo:'recurrente',frecuencia_dias:30,minutos:20,pasos:null},
+  {descripcion:'Trapear zona asignada del día',tipo:'recurrente',frecuencia_dias:1,minutos:15,pasos:'Lunes: barra y enfrente\nMartes: dos primeras sillas\nMiércoles: segundas sillas\nJueves: terceras\nViernes: cuartas\nSábado: quintas\nDomingo: zona rana'},
+  {descripcion:'Revisar huevos cocinados — si no hay, hacer',tipo:'recurrente',frecuencia_dias:1,minutos:15,pasos:'Para evitar que cuando pidan no haya tiempo de cocinarlos'},
+];
+
+// STATE
+const PIN='1984';
+let isAdmin=false,currentEmployee=null,shiftStart=null,timerInterval=null;
+let employees=[],tareas=[],turnos=[],ventas=[],stockItems=[];
+let valorHora=8500;
+
+async function init(){
+  try{const cfg=await dbGet('baros_config','key=eq.valor_hora');if(cfg&&cfg.length)valorHora=parseFloat(cfg[0].value);else await dbPost('baros_config',{key:'valor_hora',value:'8500'});}catch(e){}
+  await loadAll();
+  await seedIfEmpty();
+  renderTurnoScreen();renderTareasScreen();renderRecetas('');renderStockScreen();
+  setInterval(async()=>{
+    try{
+      const[tar,tur,ven,stk]=await Promise.all([dbGet('baros_tareas','order=tipo.asc'),dbGet('baros_turnos','order=inicio.desc&limit=60'),dbGet('baros_ventas','order=fecha.desc&limit=30'),dbGet('baros_stock','order=categoria.asc,nombre.asc')]);
+      tareas=tar||[];turnos=tur||[];ventas=ven||[];stockItems=stk||[];
+      renderTareasScreen();renderStockScreen();
+      if(isAdmin)renderAdminContent();
+    }catch(e){}
+  },30000);
+}
+
+async function seedIfEmpty(){
+  if(tareas.length===0){for(const t of TAREAS_SEED){const r=await dbPost('baros_tareas',t);if(r&&r[0])tareas.push(r[0]);}}
+  if(stockItems.length===0){for(const s of STOCK_SEED){const r=await dbPost('baros_stock',s);if(r&&r[0])stockItems.push(r[0]);}}
+}
+
+async function loadAll(){
+  try{
+    const[emps,tar,tur,ven,stk]=await Promise.all([dbGet('baros_empleados','order=nombre.asc'),dbGet('baros_tareas','order=tipo.asc'),dbGet('baros_turnos','order=inicio.desc&limit=60'),dbGet('baros_ventas','order=fecha.desc&limit=30'),dbGet('baros_stock','order=categoria.asc,nombre.asc')]);
+    employees=emps||[];tareas=tar||[];turnos=tur||[];ventas=ven||[];stockItems=stk||[];
+    const active=turnos.find(t=>t.activo);
+    if(active&&!currentEmployee){currentEmployee=employees.find(e=>e.id===active.empleado_id);shiftStart=new Date(active.inicio);startTimer();}
+  }catch(e){console.error('loadAll',e);}
+}
+
+function showScreen(name){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById('screen-'+name).classList.add('active');
+  document.getElementById('nav-'+name).classList.add('active');
+  if(name==='tareas')renderTareasScreen();
+  if(name==='stock')renderStockScreen();
+  if(name==='admin'&&isAdmin)renderAdminContent();
+}
+
+let pinBuffer='';
+function pinKey(k){
+  if(k==='del')pinBuffer=pinBuffer.slice(0,-1);
+  else if(k==='ok'){checkPin();return;}
+  else if(pinBuffer.length<4)pinBuffer+=k;
+  for(let i=0;i<4;i++)document.getElementById('d'+i).classList.toggle('filled',i<pinBuffer.length);
+}
+function checkPin(){
+  if(pinBuffer===PIN){
+    isAdmin=true;pinBuffer='';
+    for(let i=0;i<4;i++)document.getElementById('d'+i).classList.remove('filled');
+    document.getElementById('pinError').textContent='';
+    document.getElementById('adminLocked').style.display='none';
+    document.getElementById('adminUnlocked').style.display='block';
+    document.getElementById('adminBadge').classList.add('visible');
+    renderAdminContent();
+  }else{
+    document.getElementById('pinError').textContent='PIN incorrecto';
+    pinBuffer='';for(let i=0;i<4;i++)document.getElementById('d'+i).classList.remove('filled');
+  }
+}
+function lockAdmin(){
+  isAdmin=false;pinBuffer='';
+  document.getElementById('adminLocked').style.display='block';
+  document.getElementById('adminUnlocked').style.display='none';
+  document.getElementById('adminBadge').classList.remove('visible');
+  showScreen('turno');
+}
+
+// TURNO
+function renderTurnoScreen(){
+  const active=turnos.find(t=>t.activo);
+  if(active&&currentEmployee){
+    document.getElementById('turnoSelectView').style.display='none';
+    document.getElementById('turnoActiveView').style.display='block';
+    document.getElementById('turnoName').textContent=currentEmployee.nombre+' · desde '+formatTime(shiftStart);
+    renderTurnoTareas();return;
+  }
+  document.getElementById('turnoSelectView').style.display='block';
+  document.getElementById('turnoActiveView').style.display='none';
+  document.getElementById('employeeGrid').innerHTML=employees.map(emp=>{
+    const ea=turnos.find(t=>t.activo&&t.empleado_id===emp.id);
+    return`<div class="emp-card ${ea?'active-shift':''}" onclick="selectEmployee(${emp.id},'${emp.nombre}')"><div class="emp-name">${emp.nombre}</div><div class="emp-status">${ea?'🟢 En turno':'Sin turno'}</div></div>`;
+  }).join('');
+}
+function renderTurnoTareas(){
+  const today=todayStr(),ap=tareas.filter(t=>t.tipo==='apertura'),el=document.getElementById('turnoTareasList');
+  if(!ap.length){el.innerHTML='<div class="text-muted">Sin tareas de apertura.</div>';return;}
+  el.innerHTML=ap.map(t=>{const done=t.ultima_hecha===today;return`<div class="task-item"><div class="task-check ${done?'done':''}" onclick="toggleTask(${t.id})">${done?'✓':''}</div><div class="task-body"><div class="task-name ${done?'done':''}">${t.descripcion}</div>${t.minutos?`<div class="task-meta-row"><span>~${t.minutos} min</span></div>`:''}</div></div>`;}).join('');
+}
+async function selectEmployee(id,nombre){
+  const ea=turnos.find(t=>t.activo&&t.empleado_id===id);
+  if(ea){currentEmployee={id,nombre};shiftStart=new Date(ea.inicio);startTimer();renderTurnoScreen();return;}
+  currentEmployee={id,nombre};shiftStart=new Date();
+  const res=await dbPost('baros_turnos',{empleado_id:id,inicio:shiftStart.toISOString(),activo:true});
+  if(res&&res[0])turnos.unshift(res[0]);
+  startTimer();renderTurnoScreen();
+}
+function startTimer(){
+  if(timerInterval)clearInterval(timerInterval);
+  timerInterval=setInterval(()=>{if(!shiftStart)return;document.getElementById('timerDisplay').textContent=formatDuration(Date.now()-shiftStart.getTime());},1000);
+}
+function endShift(){
+  const diff=Date.now()-shiftStart.getTime(),horas=diff/3600000,pago=Math.round(horas*valorHora);
+  document.getElementById('endShiftSummary').innerHTML=`<b style="color:var(--text)">${currentEmployee.nombre}</b><br>Duración: ${formatDuration(diff)}<br>Horas: ${horas.toFixed(2)}<br>Valor a pagar: <span class="text-accent">$${pago.toLocaleString('es-CO')}</span>`;
+  openModal('modalEndShift');
+}
+async function confirmEndShift(){
+  closeModal('modalEndShift');
+  const fin=new Date(),diff=fin-shiftStart,horas=diff/3600000,pago=Math.round(horas*valorHora);
+  try{
+    const activos=await dbGet('baros_turnos','activo=eq.true&empleado_id=eq.'+currentEmployee.id);
+    if(activos&&activos[0])await fetch(`${SUPABASE_URL}/rest/v1/baros_turnos?id=eq.${activos[0].id}`,{method:'PATCH',headers:{...H,'Prefer':'return=minimal'},body:JSON.stringify({fin:fin.toISOString(),activo:false,horas:parseFloat(horas.toFixed(2)),valor_pagar:pago,pagado:false})});
+  }catch(e){console.error(e);}
+  clearInterval(timerInterval);timerInterval=null;currentEmployee=null;shiftStart=null;
+  await loadAll();renderTurnoScreen();
+}
+
+// TAREAS
+function renderTareasScreen(){
+  const hasTurno=turnos.find(t=>t.activo);
+  document.getElementById('tareasSinTurno').style.display=hasTurno?'none':'block';
+  document.getElementById('tareasContent').style.display=hasTurno?'block':'none';
+  if(!hasTurno)return;
+  const today=todayStr();
+  const ap=tareas.filter(t=>t.tipo==='apertura');
+  const cl=tareas.filter(t=>t.tipo==='cierre');
+  const rec=tareas.filter(t=>{
+    if(t.tipo!=='recurrente')return false;
+    if(!t.ultima_hecha)return true;
+    const next=new Date(t.ultima_hecha);next.setDate(next.getDate()+(t.frecuencia_dias||7));
+    return new Date(today)>=next;
+  });
+  const empId=currentEmployee?currentEmployee.id:null;
+  const as=tareas.filter(t=>t.tipo==='asignada'&&t.fecha_asignada===today&&(!empId||t.empleado_id===empId));
+  renderTaskList('listApertura',ap,today,'countApertura',false);
+  renderTaskList('listRecurrente',rec,today,'countRecurrente',true);
+  renderTaskList('listAsignada',as,today,'countAsignada',false);
+  renderTaskList('listCierre',cl,today,'countCierre',false);
+}
+function renderTaskList(cid,list,today,countId,showFreq){
+  const el=document.getElementById(cid);
+  const pending=list.filter(t=>t.ultima_hecha!==today).length;
+  const countEl=document.getElementById(countId);
+  if(countEl){countEl.textContent=pending+' pendientes';countEl.className='task-count'+(pending>0?' has-pending':'');}
+  if(!list.length){el.innerHTML='<div style="padding:8px 0;font-size:12px;color:var(--muted)">Sin tareas</div>';return;}
+  el.innerHTML=list.map(t=>{
+    const done=t.ultima_hecha===today;
+    const lastStr=t.ultima_hecha?'última: '+formatDateShort(t.ultima_hecha):'nunca hecha';
+    const freqStr=t.frecuencia_dias?(t.frecuencia_dias===1?'diaria':'cada '+t.frecuencia_dias+' días'):'';
+    return`<div class="task-item"><div class="task-check ${done?'done':''}" onclick="toggleTask(${t.id})">${done?'✓':''}</div><div class="task-body"><div class="task-name ${done?'done':''}">${t.descripcion}</div><div class="task-meta-row">${t.minutos?'<span>~'+t.minutos+' min</span>':''}${showFreq&&freqStr?`<span class="task-freq-badge">${freqStr} · ${lastStr}</span>`:''}${t.pasos?`<span class="task-pasos-link" onclick="showTaskDetail(${t.id})">Ver pasos ›</span>`:''}</div></div></div>`;
+  }).join('');
+}
+async function toggleTask(id){
+  const t=tareas.find(x=>x.id===id);if(!t)return;
+  const today=todayStr(),newVal=t.ultima_hecha===today?null:today;
+  await dbPatch('baros_tareas','id=eq.'+id,{ultima_hecha:newVal});
+  t.ultima_hecha=newVal;renderTareasScreen();renderTurnoTareas();
+}
+function showTaskDetail(id){
+  const t=tareas.find(x=>x.id===id);if(!t)return;
+  document.getElementById('detailTaskName').textContent=t.descripcion;
+  document.getElementById('detailTaskMins').textContent=t.minutos?'~'+t.minutos+' minutos':'';
+  document.getElementById('detailTaskPasos').textContent=t.pasos||'Sin instrucciones.';
+  openModal('modalTaskDetail');
+}
+
+// RECETAS
+function renderRecetas(q){
+  const query=q.toLowerCase();
+  const filtered=query?RECETAS.filter(r=>r.nombre.toLowerCase().includes(query)||r.cat.toLowerCase().includes(query)):RECETAS;
+  const cats=[...new Set(filtered.map(r=>r.cat))];
+  const container=document.getElementById('recetasContainer');
+  if(!filtered.length){container.innerHTML='<div class="empty-state"><div class="empty-icon">🔍</div>Sin resultados</div>';return;}
+  container.innerHTML=cats.map(cat=>`<div class="card"><div class="receta-cat-header">${cat}</div>${filtered.filter(r=>r.cat===cat).map(r=>`<div class="receta-item" onclick="showReceta('${encodeURIComponent(r.nombre)}')"><div class="receta-name">${r.nombre}</div><div class="receta-arrow">›</div></div>`).join('')}</div>`).join('');
+}
+function filterRecetas(q){renderRecetas(q);}
+function showReceta(enc){
+  const r=RECETAS.find(x=>x.nombre===decodeURIComponent(enc));if(!r)return;
+  document.getElementById('modalRecetaNombre').textContent=r.nombre;
+  document.getElementById('modalRecetaCat').textContent=r.cat;
+  document.getElementById('modalRecetaBody').textContent=r.prep;
+  openModal('modalReceta');
+}
+
+// STOCK
+function renderStockScreen(){
+  const cats=[...new Set(stockItems.map(s=>s.categoria))];
+  const faltantes=stockItems.filter(s=>s.falta);
+  const banner=document.getElementById('stockAlertBanner');
+  const alertList=document.getElementById('stockAlertList');
+  if(faltantes.length){
+    banner.style.display='block';
+    alertList.innerHTML=faltantes.map(s=>`<div class="stock-alert-item">• ${s.nombre}</div>`).join('');
+  }else{banner.style.display='none';}
+  const container=document.getElementById('stockContainer');
+  container.innerHTML=cats.map(cat=>`<div class="card"><div class="stock-cat-header">${cat}</div>${stockItems.filter(s=>s.categoria===cat).map(s=>`<div class="stock-item"><div class="stock-check ${s.falta?'falta':''}" onclick="toggleStock(${s.id})">${s.falta?'!':''}</div><div class="stock-name ${s.falta?'falta':''}">${s.nombre}</div></div>`).join('')}</div>`).join('');
+}
+async function toggleStock(id){
+  const s=stockItems.find(x=>x.id===id);if(!s)return;
+  s.falta=!s.falta;
+  await dbPatch('baros_stock','id=eq.'+id,{falta:s.falta});
+  renderStockScreen();
+  if(isAdmin)renderAdminStockAlerts();
+}
+
+// ADMIN
+function renderAdminContent(){
+  renderHistorial();renderVentasAdmin();renderTareasAdmin();renderAdminRecetas();renderAdminStockList();renderAdminStockAlerts();renderEmpleadosAdmin();renderAsignarSelects();
+  document.getElementById('valorHoraDisplay').textContent='$'+valorHora.toLocaleString('es-CO')+' / hora';
+}
+function renderAdminStockAlerts(){
+  const faltantes=stockItems.filter(s=>s.falta);
+  const card=document.getElementById('adminStockAlertCard');
+  const list=document.getElementById('adminStockAlertList');
+  if(faltantes.length){
+    card.style.display='block';
+    list.innerHTML=faltantes.map(s=>`<div class="admin-row"><div class="admin-row-main"><div class="admin-row-label text-danger">${s.nombre}</div><div class="admin-row-sub">${s.categoria}</div></div><button class="btn-ghost" onclick="toggleStock(${s.id})">Repuesto ✓</button></div>`).join('');
+  }else card.style.display='none';
+}
+function renderHistorial(){
+  const el=document.getElementById('historialList');
+  const cerrados=turnos.filter(t=>!t.activo);
+  if(!cerrados.length){el.innerHTML='<div class="text-muted" style="font-size:12px">Sin turnos aún.</div>';return;}
+  el.innerHTML=cerrados.map(t=>{
+    const emp=employees.find(e=>e.id===t.empleado_id);
+    return`<div class="historial-item"><div class="historial-top"><div class="historial-name">${emp?emp.nombre:'—'}</div><div class="historial-valor">$${(t.valor_pagar||0).toLocaleString('es-CO')}</div></div><div class="historial-meta">${formatDate(t.inicio)} · ${t.horas||0}h</div><div class="historial-actions">${t.pagado?'<span class="paid-badge">✓ Pagado</span>':`<span class="unpaid-badge" onclick="marcarPagado(${t.id})">Marcar pagado</span>`}<button class="btn-ghost" onclick="openEditTurno(${t.id})">✏ Editar</button><button class="btn-ghost text-danger" onclick="deleteTurno(${t.id})">✕</button></div></div>`;
+  }).join('');
+}
+async function marcarPagado(id){await dbPatch('baros_turnos','id=eq.'+id,{pagado:true});const t=turnos.find(x=>x.id===id);if(t)t.pagado=true;renderHistorial();}
+function openEditTurno(id){
+  const t=turnos.find(x=>x.id===id);if(!t)return;
+  document.getElementById('editTurnoId').value=id;
+  document.getElementById('editTurnoEmp').innerHTML=employees.map(e=>`<option value="${e.id}"${e.id===t.empleado_id?' selected':''}>${e.nombre}</option>`).join('');
+  document.getElementById('editTurnoInicio').value=toLocalInput(t.inicio);
+  document.getElementById('editTurnoFin').value=t.fin?toLocalInput(t.fin):'';
+  document.getElementById('editTurnoPagado').value=t.pagado?'true':'false';
+  openModal('modalEditTurno');
+}
+async function saveEditTurno(){
+  const id=document.getElementById('editTurnoId').value;
+  const empId=parseInt(document.getElementById('editTurnoEmp').value);
+  const inicio=document.getElementById('editTurnoInicio').value;
+  const fin=document.getElementById('editTurnoFin').value;
+  const pagado=document.getElementById('editTurnoPagado').value==='true';
+  if(!inicio){alert('Ingresa hora de entrada');return;}
+  let horas=0,valor_pagar=0;
+  if(fin){horas=parseFloat(((new Date(fin)-new Date(inicio))/3600000).toFixed(2));valor_pagar=Math.round(horas*valorHora);}
+  await dbPatch('baros_turnos','id=eq.'+id,{empleado_id:empId,inicio:new Date(inicio).toISOString(),fin:fin?new Date(fin).toISOString():null,activo:false,horas,valor_pagar,pagado});
+  closeModal('modalEditTurno');await loadAll();renderHistorial();
+}
+async function deleteTurno(id){
+  if(!confirm('¿Eliminar este turno?'))return;
+  await dbDelete('baros_turnos','id=eq.'+id);
+  turnos=turnos.filter(t=>t.id!==id);renderHistorial();
+}
+function openAddTurnoModal(){
+  renderAsignarSelects();openModal('modalAddTurno');
+}
+async function saveManualTurno(){
+  const empId=parseInt(document.getElementById('manualTurnoEmp').value);
+  const inicio=document.getElementById('manualTurnoInicio').value;
+  const fin=document.getElementById('manualTurnoFin').value;
+  if(!inicio||!fin){alert('Ingresa entrada y salida');return;}
+  const horas=parseFloat(((new Date(fin)-new Date(inicio))/3600000).toFixed(2));
+  const valor_pagar=Math.round(horas*valorHora);
+  const res=await dbPost('baros_turnos',{empleado_id:empId,inicio:new Date(inicio).toISOString(),fin:new Date(fin).toISOString(),activo:false,horas,valor_pagar,pagado:false});
+  if(res&&res[0])turnos.unshift(res[0]);
+  closeModal('modalAddTurno');
+  document.getElementById('manualTurnoInicio').value='';document.getElementById('manualTurnoFin').value='';
+  renderHistorial();
+}
+function renderVentasAdmin(){
+  const el=document.getElementById('adminVentasList');
+  if(!ventas.length){el.innerHTML='<div class="text-muted" style="font-size:12px">Sin ventas.</div>';return;}
+  el.innerHTML=ventas.slice(0,15).map(v=>`<div class="venta-row"><div><div style="font-size:13px">$${parseInt(v.venta).toLocaleString('es-CO')}</div><div style="font-size:11px;color:var(--muted)">${formatDate(v.fecha)}${v.observaciones?' · '+v.observaciones.slice(0,35):''}</div></div><button class="btn-ghost text-danger" onclick="deleteVenta(${v.id})">✕</button></div>`).join('');
+}
+async function saveVenta(){
+  const venta=document.getElementById('ventaInput').value;
+  const obs=document.getElementById('obsInput').value;
+  if(!venta){alert('Ingresa el valor');return;}
+  await dbPost('baros_ventas',{fecha:new Date().toISOString(),venta:parseFloat(venta),observaciones:obs,empleado_id:currentEmployee?currentEmployee.id:null});
+  document.getElementById('ventaInput').value='';document.getElementById('obsInput').value='';
+  ventas=await dbGet('baros_ventas','order=fecha.desc&limit=30');
+  if(isAdmin)renderVentasAdmin();
+  alert('✅ Cierre guardado');
+}
+async function deleteVenta(id){
+  if(!confirm('¿Eliminar este registro?'))return;
+  await dbDelete('baros_ventas','id=eq.'+id);
+  ventas=ventas.filter(v=>v.id!==id);renderVentasAdmin();
+}
+function renderTareasAdmin(){
+  const el=document.getElementById('adminTareasList');
+  const lista=tareas.filter(t=>t.tipo!=='asignada');
+  if(!lista.length){el.innerHTML='<div class="text-muted" style="font-size:12px">Sin tareas.</div>';return;}
+  const tipos=['apertura','cierre','recurrente'];
+  el.innerHTML=tipos.map(tipo=>{
+    const items=lista.filter(t=>t.tipo===tipo);if(!items.length)return'';
+    const label={apertura:'🌅 Apertura',cierre:'🌙 Cierre',recurrente:'🔄 Periódicas'}[tipo];
+    return`<div style="margin-bottom:10px"><div style="font-size:10px;color:var(--muted);padding:6px 0 4px;border-bottom:1px solid var(--border);margin-bottom:4px">${label}</div>`+
+      items.map(t=>`<div class="admin-row"><div class="admin-row-main"><div class="admin-row-label">${t.descripcion}</div>${t.frecuencia_dias?`<div class="admin-row-sub">Cada ${t.frecuencia_dias} días</div>`:''}</div><div class="admin-actions"><button class="btn-ghost" onclick="openEditTarea(${t.id})">✏</button><button class="btn-ghost text-danger" onclick="deleteTarea(${t.id})">✕</button></div></div>`).join('')+'</div>';
+  }).join('');
+}
+function openEditTarea(id){
+  const t=tareas.find(x=>x.id===id);if(!t)return;
+  document.getElementById('editTareaId').value=id;
+  document.getElementById('modalTareaTitle').textContent='Editar tarea';
+  document.getElementById('newTareaDesc').value=t.descripcion;
+  document.getElementById('newTareaTipo').value=t.tipo;
+  document.getElementById('frecuenciaField').style.display=t.tipo==='recurrente'?'block':'none';
+  document.getElementById('newTareaFreq').value=t.frecuencia_dias||7;
+  document.getElementById('newTareaMins').value=t.minutos||'';
+  document.getElementById('newTareaPasos').value=t.pasos||'';
+  openModal('modalAddTarea');
+}
+async function saveTarea(){
+  const idVal=document.getElementById('editTareaId').value;
+  const desc=document.getElementById('newTareaDesc').value.trim();
+  const tipo=document.getElementById('newTareaTipo').value;
+  const mins=document.getElementById('newTareaMins').value;
+  const pasos=document.getElementById('newTareaPasos').value.trim();
+  const freq=document.getElementById('newTareaFreq').value;
+  if(!desc)return;
+  const data={descripcion:desc,tipo,minutos:mins?parseInt(mins):null,pasos:pasos||null};
+  if(tipo==='recurrente')data.frecuencia_dias=parseInt(freq)||7;
+  if(idVal){
+    await dbPatch('baros_tareas','id=eq.'+idVal,data);
+    const idx=tareas.findIndex(x=>x.id==idVal);if(idx>=0)tareas[idx]={...tareas[idx],...data};
+  }else{
+    const res=await dbPost('baros_tareas',data);if(res&&res[0])tareas.push(res[0]);
+  }
+  closeModal('modalAddTarea');
+  document.getElementById('editTareaId').value='';
+  document.getElementById('modalTareaTitle').textContent='Nueva tarea';
+  ['newTareaDesc','newTareaMins','newTareaPasos'].forEach(id=>document.getElementById(id).value='');
+  renderTareasAdmin();renderTareasScreen();
+}
+async function deleteTarea(id){
+  if(!confirm('¿Eliminar esta tarea?'))return;
+  await dbDelete('baros_tareas','id=eq.'+id);
+  tareas=tareas.filter(t=>t.id!==id);renderTareasAdmin();renderTareasScreen();
+}
+
+// RECETAS ADMIN
+function renderAdminRecetas(){
+  const el=document.getElementById('adminRecetasList');
+  const cats=[...new Set(RECETAS.map(r=>r.cat))];
+  el.innerHTML=cats.map(cat=>{
+    const items=RECETAS.filter(r=>r.cat===cat);
+    return`<div style="margin-bottom:10px"><div style="font-size:10px;color:var(--muted);padding:6px 0 4px;border-bottom:1px solid var(--border);margin-bottom:4px">${cat}</div>`+
+      items.map((r,i)=>{
+        const idx=RECETAS.indexOf(r);
+        return`<div class="admin-row"><div class="admin-row-main"><div class="admin-row-label">${r.nombre}</div></div><div class="admin-actions"><button class="btn-ghost" onclick="openEditReceta(${idx})">✏</button><button class="btn-ghost text-danger" onclick="deleteReceta(${idx})">✕</button></div></div>`;
+      }).join('')+'</div>';
+  }).join('');
+}
+function openAddRecetaModal(){
+  document.getElementById('editRecetaIdx').value=-1;
+  document.getElementById('editRecetaTitle').textContent='Nueva receta';
+  document.getElementById('editRecetaNombre').value='';
+  document.getElementById('editRecetaPrep').value='';
+  openModal('modalEditReceta');
+}
+function openEditReceta(idx){
+  const r=RECETAS[idx];if(!r)return;
+  document.getElementById('editRecetaIdx').value=idx;
+  document.getElementById('editRecetaTitle').textContent='Editar receta';
+  document.getElementById('editRecetaNombre').value=r.nombre;
+  document.getElementById('editRecetaCat').value=r.cat;
+  document.getElementById('editRecetaPrep').value=r.prep;
+  openModal('modalEditReceta');
+}
+function saveReceta(){
+  const idx=parseInt(document.getElementById('editRecetaIdx').value);
+  const nombre=document.getElementById('editRecetaNombre').value.trim();
+  const cat=document.getElementById('editRecetaCat').value;
+  const prep=document.getElementById('editRecetaPrep').value.trim();
+  if(!nombre||!prep){alert('Completa nombre y preparación');return;}
+  if(idx<0)RECETAS.push({cat,nombre,prep});
+  else RECETAS[idx]={cat,nombre,prep};
+  closeModal('modalEditReceta');
+  renderRecetas('');renderAdminRecetas();
+}
+function deleteReceta(idx){
+  if(!confirm('¿Eliminar esta receta?'))return;
+  RECETAS.splice(idx,1);renderRecetas('');renderAdminRecetas();
+}
+
+// STOCK ADMIN
+function renderAdminStockList(){
+  const el=document.getElementById('adminStockList');
+  const cats=[...new Set(stockItems.map(s=>s.categoria))];
+  el.innerHTML=cats.map(cat=>`<div style="margin-bottom:10px"><div style="font-size:10px;color:var(--muted);padding:6px 0 4px;border-bottom:1px solid var(--border);margin-bottom:4px">${cat}</div>`+
+    stockItems.filter(s=>s.categoria===cat).map(s=>`<div class="admin-row"><div class="admin-row-main"><div class="admin-row-label ${s.falta?'text-danger':''}">${s.nombre}</div></div><div class="admin-actions"><button class="btn-ghost" onclick="openEditStock(${s.id})">✏</button><button class="btn-ghost text-danger" onclick="deleteStock(${s.id})">✕</button></div></div>`).join('')+'</div>').join('');
+}
+function openEditStock(id){
+  const s=stockItems.find(x=>x.id===id);if(!s)return;
+  document.getElementById('editStockId').value=id;
+  document.getElementById('modalStockTitle').textContent='Editar item';
+  document.getElementById('newStockNombre').value=s.nombre;
+  document.getElementById('newStockCat').value=s.categoria;
+  openModal('modalAddStock');
+}
+async function saveStockItem(){
+  const idVal=document.getElementById('editStockId').value;
+  const nombre=document.getElementById('newStockNombre').value.trim();
+  const categoria=document.getElementById('newStockCat').value;
+  if(!nombre)return;
+  if(idVal){
+    await dbPatch('baros_stock','id=eq.'+idVal,{nombre,categoria});
+    const s=stockItems.find(x=>x.id==idVal);if(s){s.nombre=nombre;s.categoria=categoria;}
+  }else{
+    const res=await dbPost('baros_stock',{nombre,categoria,falta:false});if(res&&res[0])stockItems.push(res[0]);
+  }
+  closeModal('modalAddStock');
+  document.getElementById('editStockId').value='';document.getElementById('modalStockTitle').textContent='Nuevo item';
+  document.getElementById('newStockNombre').value='';
+  renderAdminStockList();renderStockScreen();
+}
+async function deleteStock(id){
+  if(!confirm('¿Eliminar este item?'))return;
+  await dbDelete('baros_stock','id=eq.'+id);
+  stockItems=stockItems.filter(s=>s.id!==id);renderAdminStockList();renderStockScreen();
+}
+
+function renderEmpleadosAdmin(){
+  document.getElementById('empleadosList').innerHTML=employees.map(e=>`<div class="admin-row"><div class="admin-row-main"><div class="admin-row-label">${e.nombre}</div></div><button class="btn-ghost text-danger" onclick="deleteEmpleado(${e.id})">Eliminar</button></div>`).join('');
+}
+async function addEmpleado(){
+  const nombre=document.getElementById('newEmpName').value.trim();if(!nombre)return;
+  const res=await dbPost('baros_empleados',{nombre});if(res&&res[0])employees.push(res[0]);
+  document.getElementById('newEmpName').value='';closeModal('modalAddEmpleado');
+  renderEmpleadosAdmin();renderTurnoScreen();renderAsignarSelects();
+}
+async function deleteEmpleado(id){
+  if(!confirm('¿Eliminar este empleado?'))return;
+  await dbDelete('baros_empleados','id=eq.'+id);
+  employees=employees.filter(e=>e.id!==id);renderEmpleadosAdmin();renderTurnoScreen();
+}
+async function saveValorHora(){
+  const val=document.getElementById('newValorHora').value;if(!val)return;
+  valorHora=parseFloat(val);
+  await dbPatch('baros_config','key=eq.valor_hora',{value:String(valorHora)});
+  closeModal('modalValorHora');
+  document.getElementById('valorHoraDisplay').textContent='$'+valorHora.toLocaleString('es-CO')+' / hora';
+}
+function renderAsignarSelects(){
+  ['asignarEmpleado','manualTurnoEmp'].forEach(id=>{const el=document.getElementById(id);if(el)el.innerHTML=employees.map(e=>`<option value="${e.id}">${e.nombre}</option>`).join('');});
+}
+async function asignarTarea(){
+  const empId=document.getElementById('asignarEmpleado').value;
+  const desc=document.getElementById('asignarDesc').value.trim();
+  const mins=document.getElementById('asignarMins').value;
+  const pasos=document.getElementById('asignarPasos').value.trim();
+  if(!desc){alert('Escribe la descripción');return;}
+  const res=await dbPost('baros_tareas',{descripcion:desc,tipo:'asignada',empleado_id:parseInt(empId),fecha_asignada:todayStr(),minutos:mins?parseInt(mins):null,pasos:pasos||null});
+  if(res&&res[0])tareas.push(res[0]);
+  ['asignarDesc','asignarMins','asignarPasos'].forEach(id=>document.getElementById(id).value='');
+  alert('✅ Tarea asignada a '+employees.find(e=>e.id==empId)?.nombre);
+  renderTareasScreen();
+}
+
+// MODALS
+function openModal(id){document.getElementById(id).classList.add('open');}
+function closeModal(id){document.getElementById(id).classList.remove('open');}
+document.querySelectorAll('.modal-overlay').forEach(m=>{m.addEventListener('click',e=>{if(e.target===m)m.classList.remove('open');});});
+
+// UTILS
+function todayStr(){const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
+function formatTime(d){return new Date(d).toLocaleTimeString('es-CO',{hour:'2-digit',minute:'2-digit'});}
+function formatDuration(ms){const h=Math.floor(ms/3600000),m=Math.floor((ms%3600000)/60000),s=Math.floor((ms%60000)/1000);return String(h).padStart(2,'0')+':'+String(m).padStart(2,'0')+':'+String(s).padStart(2,'0');}
+function formatDate(iso){if(!iso)return'';return new Date(iso).toLocaleDateString('es-CO',{day:'2-digit',month:'short',year:'numeric'});}
+function formatDateShort(iso){if(!iso)return'';return new Date(iso).toLocaleDateString('es-CO',{day:'2-digit',month:'short'});}
+function toLocalInput(iso){if(!iso)return'';const d=new Date(iso),pad=n=>String(n).padStart(2,'0');return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate())+'T'+pad(d.getHours())+':'+pad(d.getMinutes());}
+
+init();
+</script>
+</body>
+</html>
